@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>会員ページ | ボート予想</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="bar">
+    <strong>会員ページ</strong>
+    <nav>
+      <a href="index.html" id="logout">ログアウト</a>
+    </nav>
+  </header>
+
+  <main class="card">
+    <h2>本日の予想</h2>
+    <div id="list">読み込み中…</div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="config.js"></script>
+  <script>
+    async function requireSession() {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      if (!session) location.href = 'index.html';
+      return session;
+    }
+
+    function render(items){
+      const root = document.getElementById('list');
+      if (!items || items.length===0){ root.textContent='まだ予想がありません。'; return; }
+      root.innerHTML = items.map(p => `
+        <section class="pred">
+          <div><b>${p.race_date}</b> @ ${p.stadium} ${p.race_no}R <small>v${p.version}</small></div>
+          <div><b>${p.tier}</b>：${p.picks}</div>
+          ${p.notes ? `<div class="notes">${p.notes}</div>` : ''}
+        </section>
+      `).join('');
+    }
+
+    document.getElementById('logout').onclick = async (e)=>{
+      e.preventDefault();
+      await supabaseClient.auth.signOut();
+      location.href='index.html';
+    };
+
+    (async ()=>{
+      await requireSession();
+      // 例：直近3日の予想を新しい順で表示
+      const { data, error } = await supabaseClient
+        .from('predictions')
+        .select('*')
+        .order('race_date', { ascending:false })
+        .limit(50);
+      if (error) {
+        document.getElementById('list').textContent = '取得エラー：' + error.message;
+      } else {
+        render(data);
+      }
+    })();
+  </script>
+</body>
+</html>
