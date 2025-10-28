@@ -46,20 +46,38 @@
       location.href='index.html';
     };
 
-    (async ()=>{
+<script>
+  function todayStr() {
+    return new Date().toISOString().slice(0, 10);
+  }
+
+  async function fetchAndRender() {
+    try {
       await requireSession();
-      // 例：直近3日の予想を新しい順で表示
+
       const { data, error } = await supabaseClient
         .from('predictions')
         .select('*')
-        .order('race_date', { ascending:false })
+        .eq('race_date', todayStr())
+        .order('created_at', { ascending: false })
         .limit(50);
+
       if (error) {
+        console.error(error);
         document.getElementById('list').textContent = '取得エラー：' + error.message;
-      } else {
-        render(data);
+        return;
       }
-    })();
+
+      render(data || []);
+    } catch (e) {
+      console.error(e);
+      document.getElementById('list').textContent = '取得エラー：' + e.message;
+    }
+  }
+
+  fetchAndRender();
+  setInterval(fetchAndRender, 60 * 1000);
+</script>
   </script>
 </body>
 </html>
