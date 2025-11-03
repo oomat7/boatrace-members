@@ -68,16 +68,16 @@
     }
 
     // Supabase から今日の予想を取得して表示
-    async function fetchAndRender() {
-      try {
-        await requireSession();
+  async function fetchAndRender() {
+  try {
+    await requireSession();
 
-        const { data, error } = await supabaseClient
-          .from('predictions')
-          .select('*')
-          .eq('race_date', todayStr())
-          .order('created_at', { ascending: false })
-          .limit(50);
+    const { data, error } = await supabaseClient
+      .from('predictions')
+      .select('*')
+      .order('race_date', { ascending: false })  // 日付順に並べる
+      .limit(50);
+
 
         if (error) {
           console.error(error);
