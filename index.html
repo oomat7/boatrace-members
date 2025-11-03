@@ -28,29 +28,44 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="config.js"></script>
   <script>
-    const $ = (id) => document.getElementById(id);
-    const setMsg = (t,isErr=false)=>{ const m=$('msg'); m.textContent=t; m.className=isErr?'err':''; };
+  const $ = (id) => document.getElementById(id);
+  const setMsg = (t, isErr = false) => {
+    const m = $('msg');
+    m.textContent = t;
+    m.className = isErr ? 'err' : '';
+  };
 
-    document.getElementById('signup').onclick = async () => {
-      setMsg('登録中…');
-      const { data, error } = await window.supabaseClient.auth.signUp({
-        email: $('email').value.trim(),
-        password: $('password').value.trim(),
-      });
-      if (error) return setMsg('登録エラー：' + error.message, true);
-      setMsg('確認メールを送信しました。メール内のリンクを押して完了してください。');
-    };
+  // ここでリダイレクト先を組み立てる
+  const redirectUrl = `${window.location.origin}/boatrace-members/`;
 
-    document.getElementById('login').onclick = async () => {
-      setMsg('ログイン中…');
-      const { data, error } = await window.supabaseClient.auth.signInWithPassword({
-        email: $('email').value.trim(),
-        password: $('password').value.trim(),
-      });
-      if (error) return setMsg('ログイン失敗：' + error.message, true);
-      setMsg('ログイン成功！数秒後に会員ページへ移動します。');
-      setTimeout(()=> location.href='members.html', 600);
-    };
-  </script>
+  // 新規登録
+  document.getElementById('signup').onclick = async () => {
+    setMsg('登録中…');
+    const { data, error } = await window.supabaseClient.auth.signUp({
+      email: $('email').value.trim(),
+      password: $('password').value.trim(),
+      options: {
+        // 確認メール内リンクで戻ってくる URL
+        emailRedirectTo: redirectUrl,
+      },
+    });
+
+    if (error) return setMsg('登録エラー：' + error.message, true);
+    setMsg('確認メールを送信しました。 メール内のリンクを押して完了してください。');
+  };
+
+  // ログイン
+  document.getElementById('login').onclick = async () => {
+    setMsg('ログイン中…');
+    const { data, error } = await window.supabaseClient.auth.signInWithPassword({
+      email: $('email').value.trim(),
+      password: $('password').value.trim(),
+    });
+
+    if (error) return setMsg('ログイン失敗：' + error.message, true);
+    setMsg('ログイン成功！数秒後に会員ページへ移動します。');
+    setTimeout(() => (location.href = 'members.html'), 600);
+  };
+</script>
 </body>
 </html>
