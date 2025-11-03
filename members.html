@@ -19,52 +19,55 @@
     <div id="list">読み込み中…</div>
   </main>
 
-  <!-- ✅ Supabaseライブラリを最初に読み込む -->
+  <!-- 1) Supabase 本体 -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 
-  <!-- ✅ あなたのSupabase接続設定 -->
-  <script>
-    const SUPABASE_URL = "https://zlezokrsuxbqwepvaksj.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp..."
+  <!-- 2) 接続設定（ANON KEY が入っている config.js） -->
+  <script src="config.js"></script>
 
-    // Supabaseクライアントをグローバル変数として作成
-    window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    console.log("✅ SupabaseClient initialized:", !!window.supabaseClient);
-  </script>
-
-  <!-- ✅ 機能スクリプト（セッション確認・データ取得など） -->
+  <!-- 3) 会員ページの処理 -->
   <script>
+    // ログイン中か確認
     async function requireSession() {
       const { data: { session } } = await supabaseClient.auth.getSession();
       if (!session) location.href = 'index.html';
       return session;
     }
 
+    // 画面への描画
     function render(items) {
       const root = document.getElementById('list');
+
       if (!items || items.length === 0) {
         root.textContent = 'まだ予想がありません。';
         return;
       }
+
       root.innerHTML = items.map(p => `
         <section class="pred">
-          <div><b>${p.race_date}</b> @ ${p.stadium} ${p.race_no}R <small>v${p.version}</small></div>
+          <div>
+            <b>${p.race_date}</b> @ ${p.stadium} ${p.race_no}R
+            <small>v${p.version}</small>
+          </div>
           <div><b>${p.tier}</b>：${p.picks}</div>
           ${p.notes ? `<div class="notes">${p.notes}</div>` : ''}
         </section>
       `).join('');
     }
 
+    // ログアウト処理
     document.getElementById('logout').onclick = async (e) => {
       e.preventDefault();
       await supabaseClient.auth.signOut();
       location.href = 'index.html';
     };
 
+    // 今日の日付 (YYYY-MM-DD)
     function todayStr() {
       return new Date().toISOString().slice(0, 10);
     }
 
+    // Supabase から今日の予想を取得して表示
     async function fetchAndRender() {
       try {
         await requireSession();
@@ -78,17 +81,20 @@
 
         if (error) {
           console.error(error);
-          document.getElementById('list').textContent = '取得エラー：' + error.message;
+          document.getElementById('list').textContent =
+            '取得エラー：' + error.message;
           return;
         }
 
         render(data || []);
       } catch (e) {
         console.error(e);
-        document.getElementById('list').textContent = '取得エラー：' + e.message;
+        document.getElementById('list').textContent =
+          '取得エラー：' + e.message;
       }
     }
 
+    // 初回表示 + 1分ごとに更新
     fetchAndRender();
     setInterval(fetchAndRender, 60 * 1000);
   </script>
