@@ -19,23 +19,20 @@
     <div id="list">読み込み中…</div>
   </main>
 
-  <!-- 1️⃣ Supabaseライブラリの読み込み -->
+  <!-- ✅ Supabaseライブラリを最初に読み込む -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 
-  <!-- 2️⃣ ここに直接 config（接続情報）を記載 -->
+  <!-- ✅ あなたのSupabase接続設定 -->
   <script>
-    // あなたの Supabase 接続設定
-    const SUPABASE_URL = "https://zlezokrsuxbqwepvaksj.supabase.co"; // ← あなたの Project URL
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpsZXpva3JzdXhicXdlcHZha3NqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAwODcyMzIsImV4cCI6MjA3NTY2MzIzMn0.sVLzbwLfPkcabjskzP42bBiB_d1A26ZPWiNep-N4gxA"; // ← あなたの anon key を貼る！
+    const SUPABASE_URL = "https://zlezokrsuxbqwepvaksj.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp..."
 
-    // グローバル変数として Supabase クライアントを作成
+    // Supabaseクライアントをグローバル変数として作成
     window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    // コンソールで読み込み確認
-    console.log("✅ Supabase Client ready:", !!window.supabaseClient);
+    console.log("✅ SupabaseClient initialized:", !!window.supabaseClient);
   </script>
 
-  <!-- 3️⃣ ページのメインスクリプト -->
+  <!-- ✅ 機能スクリプト（セッション確認・データ取得など） -->
   <script>
     async function requireSession() {
       const { data: { session } } = await supabaseClient.auth.getSession();
@@ -84,6 +81,7 @@
           document.getElementById('list').textContent = '取得エラー：' + error.message;
           return;
         }
+
         render(data || []);
       } catch (e) {
         console.error(e);
