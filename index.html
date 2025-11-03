@@ -27,7 +27,9 @@
   <!-- Supabase（CDN版）→ config.js の順で読み込み -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="config.js"></script>
-  <script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="config.js"></script>
+<script>
   const $ = (id) => document.getElementById(id);
   const setMsg = (t, isErr = false) => {
     const m = $('msg');
@@ -35,17 +37,15 @@
     m.className = isErr ? 'err' : '';
   };
 
-  // ここでリダイレクト先を組み立てる
+  // ★ ここで /boatrace-members/ を組み立てている
   const redirectUrl = `${window.location.origin}/boatrace-members/`;
 
-  // 新規登録
   document.getElementById('signup').onclick = async () => {
     setMsg('登録中…');
     const { data, error } = await window.supabaseClient.auth.signUp({
       email: $('email').value.trim(),
       password: $('password').value.trim(),
       options: {
-        // 確認メール内リンクで戻ってくる URL
         emailRedirectTo: redirectUrl,
       },
     });
@@ -54,7 +54,6 @@
     setMsg('確認メールを送信しました。 メール内のリンクを押して完了してください。');
   };
 
-  // ログイン
   document.getElementById('login').onclick = async () => {
     setMsg('ログイン中…');
     const { data, error } = await window.supabaseClient.auth.signInWithPassword({
