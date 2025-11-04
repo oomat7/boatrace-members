@@ -30,6 +30,14 @@
       font-size: 0.9em;
       margin-top: 4px;
     }
+    .racers {
+      margin-top: 4px;
+      font-size: 0.9em;
+      line-height: 1.4;
+      padding: 4px 6px;
+      background: #f7f7f7;
+      border-radius: 4px;
+    }
   </style>
 </head>
 <body>
@@ -79,6 +87,8 @@
 
       for (const p of sorted) {
         const stadium = p.stadium || '場不明';
+
+        // 場が切り替わるタイミングで一旦ブロックを確定
         if (stadium !== currentStadium) {
           if (currentStadium) {
             html += `
@@ -90,6 +100,10 @@
           currentStadium = stadium;
           contentHtml = '';
         }
+
+        const hasRacers =
+          p.r1_name || p.r2_name || p.r3_name ||
+          p.r4_name || p.r5_name || p.r6_name;
 
         contentHtml += `
           <article class="pred">
@@ -103,8 +117,29 @@
                 ${p.version ? `<small>v${p.version}</small>` : ''}
               </div>
             </header>
+
             <div class="picks"><b>${p.picks || ''}</b></div>
-            ${p.notes ? `<div class="notes">${String(p.notes).replace(/\n/g, '<br>')}</div>` : ''}
+
+            ${
+              hasRacers
+                ? `
+            <div class="racers">
+              ${p.r1_name ? `<div>1号艇：${p.r1_name}</div>` : ''}
+              ${p.r2_name ? `<div>2号艇：${p.r2_name}</div>` : ''}
+              ${p.r3_name ? `<div>3号艇：${p.r3_name}</div>` : ''}
+              ${p.r4_name ? `<div>4号艇：${p.r4_name}</div>` : ''}
+              ${p.r5_name ? `<div>5号艇：${p.r5_name}</div>` : ''}
+              ${p.r6_name ? `<div>6号艇：${p.r6_name}</div>` : ''}
+            </div>
+            `
+                : ''
+            }
+
+            ${
+              p.notes
+                ? `<div class="notes">${String(p.notes).replace(/\n/g, '<br>')}</div>`
+                : ''
+            }
             ${p.deadline ? `<div class="deadline">締切：${p.deadline}</div>` : ''}
           </article>`;
       }
@@ -120,7 +155,7 @@
 
       root.innerHTML = html;
 
-      // クリックで開閉
+      // 見出しクリックで開閉
       document.querySelectorAll('.stadium-title').forEach((el) => {
         el.onclick = () => {
           const content = el.nextElementSibling;
