@@ -73,25 +73,25 @@
         }
 
         html += `
-          <article class="pred">
-            <header class="pred-header">
-              <div>
-                <b>${p.race_no}R</b>
-                ${p.tier ? `<span class="tier">（${p.tier}）</span>` : ''}
-              </div>
-              <div class="meta">
-                <small>${p.race_date}</small>
-                ${p.version ? `<small>v${p.version}</small>` : ''}
-              </div>
-            </header>
-            <div class="picks"><b>${p.picks || ''}</b></div>
-            ${
-              p.notes
-                ? `<div class="notes">${String(p.notes).replace(/\n/g, '<br>')}</div>`
-                : ''
-            }
-          </article>
-        `;
+  <article class="pred">
+    <header class="pred-header">
+      <div>
+        <b>${p.race_no}R</b>
+        ${p.tier ? `<span class="tier">（${p.tier}）</span>` : ''}
+      </div>
+      <div class="meta">
+        <small>${p.race_date}</small>
+        ${p.version ? `<small>v${p.version}</small>` : ''}
+      </div>
+    </header>
+    <div class="picks"><b>${p.picks || ''}</b></div>
+    ${
+      p.notes
+        ? `<div class="notes">${String(p.notes).replace(/\n/g, '<br>')}</div>`
+        : ''
+    }
+  </article>
+`;
       }
 
       root.innerHTML = html;
