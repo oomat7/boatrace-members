@@ -93,12 +93,29 @@ async function main() {
     });
 
     const predictionText = ai.choices[0].message.content.trim();
-    console.log("🔵 生成コメント:", predictionText.slice(0, 80) + "...");
+    console.log("🔵 生成コメント(先頭):", predictionText.slice(0, 80) + "...");
 
-    // Supabaseの notes を AIコメントで更新
+    // ★ ここで必ず「出走メンバー」を notes の先頭に付ける
+    const racerLines = [];
+    if (race.r1_name || race.r2_name || race.r3_name || race.r4_name || race.r5_name || race.r6_name) {
+      racerLines.push("【出走メンバー】");
+      if (race.r1_name) racerLines.push(`1号艇：${race.r1_name}`);
+      if (race.r2_name) racerLines.push(`2号艇：${race.r2_name}`);
+      if (race.r3_name) racerLines.push(`3号艇：${race.r3_name}`);
+      if (race.r4_name) racerLines.push(`4号艇：${race.r4_name}`);
+      if (race.r5_name) racerLines.push(`5号艇：${race.r5_name}`);
+      if (race.r6_name) racerLines.push(`6号艇：${race.r6_name}`);
+    }
+
+    let finalNotes = predictionText;
+    if (racerLines.length > 0) {
+      finalNotes = racerLines.join("\n") + "\n\n" + predictionText;
+    }
+
+    // Supabaseの notes を更新
     const { error: upErr } = await supabase
       .from('predictions')
-      .update({ notes: predictionText })
+      .update({ notes: finalNotes })
       .eq('id', race.id);
 
     if (upErr) {
