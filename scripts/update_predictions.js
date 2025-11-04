@@ -1,26 +1,40 @@
 import 'dotenv/config';
 import { createClient } from '@supabase/supabase-js';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+// __dirname 相当を作る（ESMなのでこう書く）
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
 const supabase = createClient(supabaseUrl, serviceRoleKey);
 
 async function main() {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+  console.log('today =', today);
 
-  const row = {
-    race_date: today,
-    stadium: '徳山',
-    race_no: 1,
-    tier: '一般戦',
-    picks: '1-2-3, 1-3-2',
-    notes: 'GitHub Actions 自動登録テスト',
-    version: 1,
-  };
+  // JSONファイルのパス（scripts から見て ../data/predictions.json）
+  const jsonPath = path.join(__dirname, '../data/predictions.json');
+  const raw = fs.readFileSync(jsonPath, 'utf8');
+  const allRows = JSON.parse(raw);
+
+  // 今日の日付のレースだけに絞り込み
+  const todaysRows = allRows.filter((r) => r.race_date === today);
+
+  if (todaysRows.length === 0) {
+    console.log('No predictions for today. Nothing to insert.');
+    return;
+  }
+
+  console.log('Inserting rows:', todaysRows);
 
   const { data, error } = await supabase
     .from('predictions')
-    .insert(row)
+    .insert(todaysRows)
     .select();
 
   if (error) {
@@ -31,4 +45,7 @@ async function main() {
   console.log('✅ Inserted:', data);
 }
 
-main();
+main().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});
