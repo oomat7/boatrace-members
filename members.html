@@ -5,6 +5,32 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>会員ページ | ボート予想</title>
   <link rel="stylesheet" href="styles.css" />
+  <style>
+    .stadium-title {
+      cursor: pointer;
+      background: #eef3f8;
+      padding: 8px 12px;
+      margin-top: 12px;
+      border-radius: 8px;
+      font-weight: bold;
+      transition: background 0.3s;
+    }
+    .stadium-title:hover {
+      background: #dde7f1;
+    }
+    .stadium-content {
+      display: none;
+      padding: 8px 12px;
+    }
+    .stadium-content.open {
+      display: block;
+    }
+    .deadline {
+      color: #555;
+      font-size: 0.9em;
+      margin-top: 4px;
+    }
+  </style>
 </head>
 <body>
   <header class="bar">
@@ -19,90 +45,90 @@
     <div id="list">読み込み中…</div>
   </main>
 
-  <!-- 1) Supabase 本体 -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-
-  <!-- 2) 接続設定（ANON KEY が入っている config.js） -->
   <script src="config.js"></script>
-
-  <!-- 3) 会員ページの処理 -->
   <script>
-    // 今日の日付（YYYY-MM-DD）を返す
     function todayStr() {
       return new Date().toISOString().slice(0, 10);
     }
 
-    // ログインチェック（セッションがなければログイン画面へ戻す）
     async function requireSession() {
       const { data: { session } } = await supabaseClient.auth.getSession();
-      if (!session) {
-        location.href = 'index.html';
-      }
+      if (!session) location.href = 'index.html';
       return session;
     }
 
-    // 画面への描画処理
     function render(items) {
       const root = document.getElementById('list');
-
       if (!items || items.length === 0) {
         root.textContent = 'まだ予想がありません。';
         return;
       }
 
-      // 1) 場名 → レース番号 の順にソート
       const sorted = [...items].sort((a, b) => {
         const stA = a.stadium || '場不明';
         const stB = b.stadium || '場不明';
         const s = stA.localeCompare(stB, 'ja');
         if (s !== 0) return s;
-        return (a.race_no || 0) - (b.race_no || 0); // 1R → 12R
+        return (a.race_no || 0) - (b.race_no || 0);
       });
 
-      // 2) 場ごとに見出し＋レース一覧を作る
       let html = '';
       let currentStadium = null;
+      let contentHtml = '';
 
       for (const p of sorted) {
         const stadium = p.stadium || '場不明';
-
-        // 場が変わったら見出しを追加
         if (stadium !== currentStadium) {
+          if (currentStadium) {
+            html += `
+              <section class="stadium-block">
+                <h3 class="stadium-title">${currentStadium}</h3>
+                <div class="stadium-content">${contentHtml}</div>
+              </section>`;
+          }
           currentStadium = stadium;
-          html += `<h3 class="stadium-title">${stadium}</h3>`;
+          contentHtml = '';
         }
 
- html += `
-  <article class="pred">
-    <header class="pred-header">
-      <div>
-        <b>${p.race_no}R</b>
-        ${p.tier ? `<span class="tier">（${p.tier}）</span>` : ''}
-      </div>
-      <div class="meta">
-        <small>${p.race_date}</small>
-        ${p.version ? `<small>v${p.version}</small>` : ''}
-      </div>
-    </header>
-    <div class="picks"><b>${p.picks || ''}</b></div>
-    ${
-      p.notes
-        ? `<div class="notes">${String(p.notes).replace(/\n/g, '<br>')}</div>`
-        : ''
-    }
-    ${
-      p.deadline
-        ? `<div class="deadline">締切：${p.deadline}</div>`
-        : ''
-    }
-  </article>
-`;
+        contentHtml += `
+          <article class="pred">
+            <header class="pred-header">
+              <div>
+                <b>${p.race_no}R</b>
+                ${p.tier ? `<span class="tier">（${p.tier}）</span>` : ''}
+              </div>
+              <div class="meta">
+                <small>${p.race_date}</small>
+                ${p.version ? `<small>v${p.version}</small>` : ''}
+              </div>
+            </header>
+            <div class="picks"><b>${p.picks || ''}</b></div>
+            ${p.notes ? `<div class="notes">${String(p.notes).replace(/\n/g, '<br>')}</div>` : ''}
+            ${p.deadline ? `<div class="deadline">締切：${p.deadline}</div>` : ''}
+          </article>`;
+      }
+
+      // 最後の場も追加
+      if (currentStadium) {
+        html += `
+          <section class="stadium-block">
+            <h3 class="stadium-title">${currentStadium}</h3>
+            <div class="stadium-content">${contentHtml}</div>
+          </section>`;
       }
 
       root.innerHTML = html;
+
+      // クリックで開閉
+      document.querySelectorAll('.stadium-title').forEach((el) => {
+        el.onclick = () => {
+          const content = el.nextElementSibling;
+          content.classList.toggle('open');
+        };
+      });
     }
 
-    // Supabase から当日分を取得して描画
     async function fetchAndRender() {
       try {
         await requireSession();
@@ -112,32 +138,28 @@
           .from('predictions')
           .select('*')
           .eq('race_date', today)
-          .order('stadium', { ascending: true }) // 場ごと
-          .order('race_no', { ascending: true }); // 1R→12R 順
+          .order('stadium', { ascending: true })
+          .order('race_no', { ascending: true });
 
         if (error) {
           console.error(error);
-          document.getElementById('list').textContent =
-            '取得エラー：' + error.message;
+          document.getElementById('list').textContent = '取得エラー：' + error.message;
           return;
         }
 
         render(data || []);
       } catch (e) {
         console.error(e);
-        document.getElementById('list').textContent =
-          '取得エラー：' + e.message;
+        document.getElementById('list').textContent = '取得エラー：' + e.message;
       }
     }
 
-    // ログアウトボタン
     document.getElementById('logout').onclick = async (e) => {
       e.preventDefault();
       await supabaseClient.auth.signOut();
       location.href = 'index.html';
     };
 
-    // 初回表示 ＋ 1分ごとに自動更新
     fetchAndRender();
     setInterval(fetchAndRender, 60 * 1000);
   </script>
