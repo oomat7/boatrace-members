@@ -5,40 +5,6 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>会員ページ | ボート予想</title>
   <link rel="stylesheet" href="styles.css" />
-  <style>
-    .stadium-title {
-      cursor: pointer;
-      background: #eef3f8;
-      padding: 8px 12px;
-      margin-top: 12px;
-      border-radius: 8px;
-      font-weight: bold;
-      transition: background 0.3s;
-    }
-    .stadium-title:hover {
-      background: #dde7f1;
-    }
-    .stadium-content {
-      display: none;
-      padding: 8px 12px;
-    }
-    .stadium-content.open {
-      display: block;
-    }
-    .deadline {
-      color: #555;
-      font-size: 0.9em;
-      margin-top: 4px;
-    }
-    .racers {
-      margin-top: 4px;
-      font-size: 0.9em;
-      line-height: 1.4;
-      padding: 4px 6px;
-      background: #f7f7f7;
-      border-radius: 4px;
-    }
-  </style>
 </head>
 <body>
   <header class="bar">
@@ -53,117 +19,110 @@
     <div id="list">読み込み中…</div>
   </main>
 
+  <!-- Supabase 本体 -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <!-- 接続設定（ANON KEY など） -->
   <script src="config.js"></script>
+
   <script>
+    // 今日の日付（YYYY-MM-DD）
     function todayStr() {
       return new Date().toISOString().slice(0, 10);
     }
 
+    // セッション確認（未ログインなら index.html に戻す）
     async function requireSession() {
       const { data: { session } } = await supabaseClient.auth.getSession();
       if (!session) location.href = 'index.html';
       return session;
     }
 
+    // 画面描画
     function render(items) {
       const root = document.getElementById('list');
+
       if (!items || items.length === 0) {
         root.textContent = 'まだ予想がありません。';
         return;
       }
 
-      const sorted = [...items].sort((a, b) => {
-        const stA = a.stadium || '場不明';
-        const stB = b.stadium || '場不明';
-        const s = stA.localeCompare(stB, 'ja');
-        if (s !== 0) return s;
-        return (a.race_no || 0) - (b.race_no || 0);
-      });
-
-      let html = '';
-      let currentStadium = null;
-      let contentHtml = '';
-
-      for (const p of sorted) {
-        const stadium = p.stadium || '場不明';
-
-        // 場が切り替わるタイミングで一旦ブロックを確定
-        if (stadium !== currentStadium) {
-          if (currentStadium) {
-            html += `
-              <section class="stadium-block">
-                <h3 class="stadium-title">${currentStadium}</h3>
-                <div class="stadium-content">${contentHtml}</div>
-              </section>`;
-          }
-          currentStadium = stadium;
-          contentHtml = '';
-        }
-
-        const hasRacers =
-          p.r1_name || p.r2_name || p.r3_name ||
-          p.r4_name || p.r5_name || p.r6_name;
-
-        contentHtml += `
-          <article class="pred">
-            <header class="pred-header">
-              <div>
-                <b>${p.race_no}R</b>
-                ${p.tier ? `<span class="tier">（${p.tier}）</span>` : ''}
-              </div>
-              <div class="meta">
-                <small>${p.race_date}</small>
-                ${p.version ? `<small>v${p.version}</small>` : ''}
-              </div>
-            </header>
-
-            <div class="picks"><b>${p.picks || ''}</b></div>
-
-            ${
-              hasRacers
-                ? `
-            <div class="racers">
-              ${p.r1_name ? `<div>1号艇：${p.r1_name}</div>` : ''}
-              ${p.r2_name ? `<div>2号艇：${p.r2_name}</div>` : ''}
-              ${p.r3_name ? `<div>3号艇：${p.r3_name}</div>` : ''}
-              ${p.r4_name ? `<div>4号艇：${p.r4_name}</div>` : ''}
-              ${p.r5_name ? `<div>5号艇：${p.r5_name}</div>` : ''}
-              ${p.r6_name ? `<div>6号艇：${p.r6_name}</div>` : ''}
-            </div>
-            `
-                : ''
-            }
-
-            ${
-              p.notes
-                ? `<div class="notes">${String(p.notes).replace(/\n/g, '<br>')}</div>`
-                : ''
-            }
-            ${p.deadline ? `<div class="deadline">締切：${p.deadline}</div>` : ''}
-          </article>`;
+      // stadium ごとにグループ化
+      const byStadium = {};
+      for (const p of items) {
+        const key = p.stadium || '場不明';
+        if (!byStadium[key]) byStadium[key] = [];
+        byStadium[key].push(p);
       }
 
-      // 最後の場も追加
-      if (currentStadium) {
-        html += `
+      // 場名順ソート
+      const stadiumNames = Object.keys(byStadium).sort((a, b) =>
+        a.localeCompare(b, 'ja')
+      );
+
+      const html = stadiumNames.map((stadium) => {
+        // この場のレースを 1R → 12R の順にソート
+        const races = byStadium[stadium].sort(
+          (a, b) => (a.race_no || 0) - (b.race_no || 0)
+        );
+
+        const raceHtml = races.map((p) => {
+          // AI コメント：ai_comment → notes の順で優先
+          const aiComment = (p.ai_comment || p.notes || '').toString();
+          // 選手名情報（drivers カラム想定）
+          const drivers = (p.drivers || '').toString();
+
+          return `
+            <details class="pred" open>
+              <summary class="pred-header">
+                <div>
+                  <b>${p.race_no}R</b>
+                  ${p.tier ? `<span class="tier">（${p.tier}）</span>` : ''}
+                </div>
+                <div class="meta">
+                  <small>${p.race_date || ''}</small>
+                  ${p.cutoff_time ? `<small>締切 ${p.cutoff_time}</small>` : ''}
+                  ${p.version ? `<small>v${p.version}</small>` : ''}
+                </div>
+              </summary>
+
+              <div class="pred-body">
+                <div class="picks">
+                  <b>${p.picks || ''}</b>
+                </div>
+
+                ${
+                  drivers
+                    ? `<div class="drivers">
+                        <strong>出走メンバー</strong><br>
+                        ${drivers.replace(/\n/g, '<br>')}
+                       </div>`
+                    : ''
+                }
+
+                ${
+                  aiComment
+                    ? `<div class="notes">
+                         ${aiComment.replace(/\n/g, '<br>')}
+                       </div>`
+                    : ''
+                }
+              </div>
+            </details>
+          `;
+        }).join('');
+
+        return `
           <section class="stadium-block">
-            <h3 class="stadium-title">${currentStadium}</h3>
-            <div class="stadium-content">${contentHtml}</div>
-          </section>`;
-      }
+            <h3 class="stadium-title">${stadium}</h3>
+            ${raceHtml}
+          </section>
+        `;
+      }).join('');
 
       root.innerHTML = html;
-
-      // 見出しクリックで開閉
-      document.querySelectorAll('.stadium-title').forEach((el) => {
-        el.onclick = () => {
-          const content = el.nextElementSibling;
-          content.classList.toggle('open');
-        };
-      });
     }
 
+    // Supabase から当日分を取得して描画
     async function fetchAndRender() {
       try {
         await requireSession();
@@ -178,23 +137,27 @@
 
         if (error) {
           console.error(error);
-          document.getElementById('list').textContent = '取得エラー：' + error.message;
+          document.getElementById('list').textContent =
+            '取得エラー：' + error.message;
           return;
         }
 
         render(data || []);
       } catch (e) {
         console.error(e);
-        document.getElementById('list').textContent = '取得エラー：' + e.message;
+        document.getElementById('list').textContent =
+          '取得エラー：' + e.message;
       }
     }
 
+    // ログアウト
     document.getElementById('logout').onclick = async (e) => {
       e.preventDefault();
       await supabaseClient.auth.signOut();
       location.href = 'index.html';
     };
 
+    // 初回表示＋1分ごと自動更新
     fetchAndRender();
     setInterval(fetchAndRender, 60 * 1000);
   </script>
