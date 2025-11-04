@@ -25,5 +25,5 @@ jobs:
       - name: Run update script
         run: node scripts/update_predictions.js
         env:
-          SUPABASE_URL: ${{ secrets.https://zlezokrsuxbqwepvaksj.supabase.co }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpsZXpva3JzdXhicXdlcHZha3NqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2MDA4NzIzMiwiZXhwIjoyMDc1NjYzMjMyfQ.mSH-w2cy0zDIAUHndMdvMI7nGlofF1bFnekueMSB85I }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
