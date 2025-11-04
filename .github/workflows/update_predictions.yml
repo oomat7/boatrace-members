@@ -1,0 +1,29 @@
+name: Update predictions
+
+on:
+  # 毎日 7:00 JST に自動実行（＝22:00 UTC）
+  schedule:
+    - cron: '0 22 * * *'
+  # 手動で実行できるようにもしておく
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install @supabase/supabase-js dotenv
+
+      - name: Run update script
+        run: node scripts/update_predictions.js
+        env:
+          SUPABASE_URL: ${{ secrets.https://zlezokrsuxbqwepvaksj.supabase.co }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpsZXpva3JzdXhicXdlcHZha3NqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2MDA4NzIzMiwiZXhwIjoyMDc1NjYzMjMyfQ.mSH-w2cy0zDIAUHndMdvMI7nGlofF1bFnekueMSB85I }}
