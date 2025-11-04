@@ -72,7 +72,7 @@
           html += `<h3 class="stadium-title">${stadium}</h3>`;
         }
 
-        html += `
+ html += `
   <article class="pred">
     <header class="pred-header">
       <div>
@@ -88,6 +88,11 @@
     ${
       p.notes
         ? `<div class="notes">${String(p.notes).replace(/\n/g, '<br>')}</div>`
+        : ''
+    }
+    ${
+      p.deadline
+        ? `<div class="deadline">締切：${p.deadline}</div>`
         : ''
     }
   </article>
