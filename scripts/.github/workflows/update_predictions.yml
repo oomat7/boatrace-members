@@ -12,18 +12,32 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      # リポジトリのコードをチェックアウト
+      - name: Checkout
+        uses: actions/checkout@v4
 
+      # Node.js をセットアップ
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
+      # 必要なパッケージをインストール
       - name: Install dependencies
-        run: npm install @supabase/supabase-js dotenv
+        run: npm install @supabase/supabase-js dotenv openai
 
-      - name: Run update script
-        run: node scripts/update_predictions.js
+      # 🔧 いったんレース情報の更新は止める（手入力の選手名を消さないため）
+      #    JSON から自動で予想を入れ直したいタイミングでコメントアウトを解除します
+      # - name: Run update script
+      #   run: node scripts/update_predictions.js
+      #   env:
+      #     SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      #     SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+      # AI コメント生成
+      - name: Run AI prediction generator
+        run: node scripts/generate_ai_prediction.js
         env:
-          SUPABASE_URL: ${{ secrets.https://zlezokrsuxbqwepvaksj.supabase.co }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpsZXpva3JzdXhicXdlcHZha3NqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2MDA4NzIzMiwiZXhwIjoyMDc1NjYzMjMyfQ.mSH-w2cy0zDIAUHndMdvMI7nGlofF1bFnekueMSB85I }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
