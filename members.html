@@ -26,120 +26,115 @@
   <script src="config.js"></script>
 
   <!-- 3) 会員ページの処理 -->
- <script>
-  // 今日の日付（YYYY-MM-DD）を返す
-  function todayStr() {
-    return new Date().toISOString().slice(0, 10);
-  }
-
-  // ログインチェック（セッションがなければログイン画面へ戻す）
-  async function requireSession() {
-    const { data: { session } } = await supabaseClient.auth.getSession();
-    if (!session) {
-      location.href = 'index.html';
-    }
-    return session;
-  }
-
-  // 画面への描画処理
-  function render(items) {
-    const root = document.getElementById('list');
-
-    if (!items || items.length === 0) {
-      root.textContent = 'まだ予想がありません。';
-      return;
+  <script>
+    // 今日の日付（YYYY-MM-DD）を返す
+    function todayStr() {
+      return new Date().toISOString().slice(0, 10);
     }
 
-    // stadium ごとにグループ化
-    const byStadium = {};
-    for (const p of items) {
-      const key = p.stadium || '場不明';
-      if (!byStadium[key]) byStadium[key] = [];
-      byStadium[key].push(p);
+    // ログインチェック（セッションがなければログイン画面へ戻す）
+    async function requireSession() {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      if (!session) {
+        location.href = 'index.html';
+      }
+      return session;
     }
 
-    // 場名順にソート
-    const stadiumNames = Object.keys(byStadium).sort((a, b) =>
-      a.localeCompare(b, 'ja')
-    );
+    // 画面への描画処理
+    function render(items) {
+      const root = document.getElementById('list');
 
-    const html = stadiumNames.map((stadium) => {
-      // この場のレースを 1R→12R の順にソート
-      const races = byStadium[stadium].sort(
-        (a, b) => (a.race_no || 0) - (b.race_no || 0)
-      );
-
-      const raceHtml = races.map((p) => `
-        <article class="pred">
-          <header class="pred-header">
-            <div>
-              <b>${p.race_no}R</b>
-              ${p.tier ? `<span class="tier">（${p.tier}）</span>` : ''}
-            </div>
-            <div class="meta">
-              <small>${p.race_date}</small>
-              ${p.version ? `<small>v${p.version}</small>` : ''}
-            </div>
-          </header>
-          <div class="picks"><b>${p.picks || ''}</b></div>
-          ${
-            p.notes
-              ? `<div class="notes">${String(p.notes).replace(/\n/g, '<br>')}</div>`
-              : ''
-          }
-        </article>
-      `).join('');
-
-      return `
-        <section class="stadium-block">
-          <h3 class="stadium-title">${stadium}</h3>
-          ${raceHtml}
-        </section>
-      `;
-    }).join('');
-
-    root.innerHTML = html;
-  }
-
-  // Supabase から当日分を取得して描画
-  async function fetchAndRender() {
-    try {
-      await requireSession();
-      const today = todayStr();
-
-      const { data, error } = await supabaseClient
-        .from('predictions')
-        .select('*')
-        .eq('race_date', today)
-        .order('stadium', { ascending: true }) // 場ごと
-        .order('race_no', { ascending: true }); // 1R→12R 順
-
-      if (error) {
-        console.error(error);
-        document.getElementById('list').textContent =
-          '取得エラー：' + error.message;
+      if (!items || items.length === 0) {
+        root.textContent = 'まだ予想がありません。';
         return;
       }
 
-      render(data || []);
-    } catch (e) {
-      console.error(e);
-      document.getElementById('list').textContent =
-        '取得エラー：' + e.message;
+      // 1) 場名 → レース番号 の順にソート
+      const sorted = [...items].sort((a, b) => {
+        const stA = a.stadium || '場不明';
+        const stB = b.stadium || '場不明';
+        const s = stA.localeCompare(stB, 'ja');
+        if (s !== 0) return s;
+        return (a.race_no || 0) - (b.race_no || 0); // 1R → 12R
+      });
+
+      // 2) 場ごとに見出し＋レース一覧を作る
+      let html = '';
+      let currentStadium = null;
+
+      for (const p of sorted) {
+        const stadium = p.stadium || '場不明';
+
+        // 場が変わったら見出しを追加
+        if (stadium !== currentStadium) {
+          currentStadium = stadium;
+          html += `<h3 class="stadium-title">${stadium}</h3>`;
+        }
+
+        html += `
+          <article class="pred">
+            <header class="pred-header">
+              <div>
+                <b>${p.race_no}R</b>
+                ${p.tier ? `<span class="tier">（${p.tier}）</span>` : ''}
+              </div>
+              <div class="meta">
+                <small>${p.race_date}</small>
+                ${p.version ? `<small>v${p.version}</small>` : ''}
+              </div>
+            </header>
+            <div class="picks"><b>${p.picks || ''}</b></div>
+            ${
+              p.notes
+                ? `<div class="notes">${String(p.notes).replace(/\n/g, '<br>')}</div>`
+                : ''
+            }
+          </article>
+        `;
+      }
+
+      root.innerHTML = html;
     }
-  }
 
-  // ログアウトボタン
-  document.getElementById('logout').onclick = async (e) => {
-    e.preventDefault();
-    await supabaseClient.auth.signOut();
-    location.href = 'index.html';
-  };
+    // Supabase から当日分を取得して描画
+    async function fetchAndRender() {
+      try {
+        await requireSession();
+        const today = todayStr();
 
-  // 初回表示 ＋ 1分ごとに自動更新
-  fetchAndRender();
-  setInterval(fetchAndRender, 60 * 1000);
-</script>
-  
+        const { data, error } = await supabaseClient
+          .from('predictions')
+          .select('*')
+          .eq('race_date', today)
+          .order('stadium', { ascending: true }) // 場ごと
+          .order('race_no', { ascending: true }); // 1R→12R 順
+
+        if (error) {
+          console.error(error);
+          document.getElementById('list').textContent =
+            '取得エラー：' + error.message;
+          return;
+        }
+
+        render(data || []);
+      } catch (e) {
+        console.error(e);
+        document.getElementById('list').textContent =
+          '取得エラー：' + e.message;
+      }
+    }
+
+    // ログアウトボタン
+    document.getElementById('logout').onclick = async (e) => {
+      e.preventDefault();
+      await supabaseClient.auth.signOut();
+      location.href = 'index.html';
+    };
+
+    // 初回表示 ＋ 1分ごとに自動更新
+    fetchAndRender();
+    setInterval(fetchAndRender, 60 * 1000);
+  </script>
 </body>
 </html>
