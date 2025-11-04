@@ -1,0 +1,20 @@
+[
+  {
+    "race_date": "2025-11-04",
+    "stadium": "徳山",
+    "race_no": 1,
+    "tier": "一般戦",
+    "picks": "1-2-3, 1-3-2",
+    "notes": "向かい風3m、イン有利",
+    "version": 1
+  },
+  {
+    "race_date": "2025-11-05",
+    "stadium": "徳山",
+    "race_no": 12,
+    "tier": "準優勝戦",
+    "picks": "1-2-4, 1-4-2",
+    "notes": "追い風弱め、差し注意",
+    "version": 1
+  }
+]
