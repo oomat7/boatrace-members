@@ -1,10 +1,10 @@
 name: Update predictions
 
 on:
-  # 毎日 7:00 JST に自動実行（＝22:00 UTC）
+  # 毎日 7:00 JST に自動実行（22:00 UTC）
   schedule:
     - cron: '0 22 * * *'
-  # 手動で実行できるようにもしておく
+  # 手動でも実行できるようにしておく
   workflow_dispatch:
 
 jobs:
@@ -12,18 +12,31 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      # リポジトリをチェックアウト
+      - name: Checkout
+        uses: actions/checkout@v4
 
+      # Node をセットアップ
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
+      # 必要なライブラリをインストール
       - name: Install dependencies
-        run: npm install @supabase/supabase-js dotenv
+        run: npm install @supabase/supabase-js dotenv openai
 
+      # 1) JSON → Supabase に登録するスクリプト
       - name: Run update script
         run: node scripts/update_predictions.js
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+      # 2) Supabase のデータを元に AI コメントを生成して追記するスクリプト
+      - name: Run AI prediction generator
+        run: node scripts/generate_ai_prediction.js
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
