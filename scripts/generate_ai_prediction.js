@@ -2,20 +2,24 @@ import 'dotenv/config';
 import OpenAI from "openai";
 import { createClient } from '@supabase/supabase-js';
 
-// Supabase 接続設定
+// === Supabase 接続設定 ===
 const supabaseUrl = process.env.SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-// OpenAI 接続設定
+// === OpenAI 接続設定 ===
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
 
+// === スリープ関数（レート制限対策） ===
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 async function main() {
+  console.log("=== 🧠 AI自動予想更新ジョブ開始 ===");
   const today = new Date().toISOString().slice(0, 10);
 
-  // 本日のレース情報を取得
+  // === 本日のレース情報を取得 ===
   const { data: races, error } = await supabase
     .from('predictions')
     .select('*')
@@ -32,6 +36,13 @@ async function main() {
   for (const race of races) {
     console.log(`🟦 AI生成中: ${race.stadium} ${race.race_no}R`);
 
+    // すでにAIコメントがある場合はスキップ（上書き防止）
+    if (race.notes && race.notes.includes("🎯")) {
+      console.log("↪ すでにAI予想あり、スキップ");
+      continue;
+    }
+
+    // === 予想生成プロンプト ===
     const prompt = `
 あなたはボートレース専門の予想AIです。
 以下のレース情報をもとに、日本語で有料会員向けの詳しい予想解説を作成してください。
@@ -44,86 +55,90 @@ async function main() {
 - 買い目(三連単): ${race.picks || "未設定"}
 
 【出走メンバー】
-- 1号艇: ${race.r1_name || "不明"}
-- 2号艇: ${race.r2_name || "不明"}
-- 3号艇: ${race.r3_name || "不明"}
-- 4号艇: ${race.r4_name || "不明"}
-- 5号艇: ${race.r5_name || "不明"}
-- 6号艇: ${race.r6_name || "不明"}
+1号艇: ${race.r1_name || "不明"}
+2号艇: ${race.r2_name || "不明"}
+3号艇: ${race.r3_name || "不明"}
+4号艇: ${race.r4_name || "不明"}
+5号艇: ${race.r5_name || "不明"}
+6号艇: ${race.r6_name || "不明"}
 
 【守ってほしいこと】
 - 買い目は必ず「${race.picks || "未設定"}」の範囲内でコメントしてください。新しい組み合わせは勝手に増やさないでください。
 - 選手名と艇番もできるだけ本文の中で触れてください（例: 「1号艇 平見はイン戦安定」など）。
-- モーターや足色のコメントは「一般的な傾向」としての表現にとどめ、実際の公式データがあるとは限らない前提で書いてください。
+- モーターや足色のコメントは「一般的な傾向」として表現してください。
 
-【出力フォーマット（この形で書いてください）】
-
+【出力フォーマット】
 🎯 フォーメーション予想
-【本命：信頼軸】
-ここに本命となる買い目と簡単な理由（上の買い目から選ぶこと）
-
-【準本線（やや荒れ想定）】
-ここに準本線となる買い目と理由
-
-【超穴（展開ハマり）】
-ここに穴目となる買い目と理由
+【本命】〜
+【準本線】〜
+【超穴】〜
 
 ⚙️ 決まり手想定＆信頼指標
-逃げ：◯◯％
-差し：◯◯％
-まくり・まくり差し：◯◯％
-その他：◯◯％
-簡単なコメント（例：イン有利／センター勢が怖い 等）
+逃げ：〜％
+差し：〜％
+まくり・まくり差し：〜％
+その他：〜％
 
 ✅ 結論（精度重視最終形）
-◎本命選手（例：1号艇 平見 真彦）
-○対抗
-▲単穴
-☆ヒモ穴
-（上から順に理由も1行ずつ）
+◎本命選手（理由）
+○対抗選手（理由）
+▲単穴選手（理由）
+☆ヒモ穴（理由）
 
 🎯 三連単最終買い目（精度優先）
-ここに最終的に推奨する三連単を列挙（必ず ${race.picks || "上記の買い目"} の中から選ぶ）
+必ず ${race.picks || "上記の買い目"} の中から選んでください。
 `.trim();
 
-    const ai = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [{ role: "user", content: prompt }],
-      temperature: 0.7
-    });
+    // === OpenAI 呼び出し ===
+    let predictionText = "";
+    try {
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0.7,
+      });
 
-    const predictionText = ai.choices[0].message.content.trim();
-    console.log("🔵 生成コメント(先頭):", predictionText.slice(0, 80) + "...");
+      predictionText = response.choices[0].message.content.trim();
+      console.log("🔵 生成コメント(先頭80文字):", predictionText.slice(0, 80) + "...");
+    } catch (e) {
+      if (e.status === 429 || e.code === "rate_limit_exceeded") {
+        console.log("⚠️ OpenAIレート制限に達しました。次回再実行まで待機。");
+        break; // 429が出たら一旦終了
+      } else {
+        console.error("❌ OpenAI生成エラー:", e);
+        continue;
+      }
+    }
 
-    // ★ ここで必ず「出走メンバー」を notes の先頭に付ける
+    // === 出走メンバーを先頭に付ける ===
     const racerLines = [];
-    if (race.r1_name || race.r2_name || race.r3_name || race.r4_name || race.r5_name || race.r6_name) {
-      racerLines.push("【出走メンバー】");
-      if (race.r1_name) racerLines.push(`1号艇：${race.r1_name}`);
-      if (race.r2_name) racerLines.push(`2号艇：${race.r2_name}`);
-      if (race.r3_name) racerLines.push(`3号艇：${race.r3_name}`);
-      if (race.r4_name) racerLines.push(`4号艇：${race.r4_name}`);
-      if (race.r5_name) racerLines.push(`5号艇：${race.r5_name}`);
-      if (race.r6_name) racerLines.push(`6号艇：${race.r6_name}`);
-    }
+    racerLines.push("【出走メンバー】");
+    if (race.r1_name) racerLines.push(`1号艇：${race.r1_name}`);
+    if (race.r2_name) racerLines.push(`2号艇：${race.r2_name}`);
+    if (race.r3_name) racerLines.push(`3号艇：${race.r3_name}`);
+    if (race.r4_name) racerLines.push(`4号艇：${race.r4_name}`);
+    if (race.r5_name) racerLines.push(`5号艇：${race.r5_name}`);
+    if (race.r6_name) racerLines.push(`6号艇：${race.r6_name}`);
 
-    let finalNotes = predictionText;
-    if (racerLines.length > 0) {
-      finalNotes = racerLines.join("\n") + "\n\n" + predictionText;
-    }
+    const finalNotes = racerLines.join("\n") + "\n\n" + predictionText;
 
-    // Supabaseの notes を更新
+    // === Supabase 更新 ===
     const { error: upErr } = await supabase
-      .from('predictions')
+      .from("predictions")
       .update({ notes: finalNotes })
-      .eq('id', race.id);
+      .eq("id", race.id);
 
     if (upErr) {
-      console.error("❌ 更新エラー:", upErr);
+      console.error("❌ Supabase更新エラー:", upErr);
     } else {
       console.log(`✅ 更新完了: ${race.stadium} ${race.race_no}R`);
     }
+
+    // === 次の処理まで待機（レート制限回避） ===
+    await sleep(25000); // 25秒間隔で次へ
   }
+
+  console.log("=== 🎯 全レースAI生成完了 ===");
 }
 
 main().catch((err) => {
