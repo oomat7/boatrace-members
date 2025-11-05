@@ -36,12 +36,12 @@ async function main() {
     );
 
     // 選手名（undefined なら空文字）
-    const n1 = race.r1_name ?? '';
-    const n2 = race.r2_name ?? '';
-    const n3 = race.r3_name ?? '';
-    const n4 = race.r4_name ?? '';
-    const n5 = race.r5_name ?? '';
-    const n6 = race.r6_name ?? '';
+const n1 = race.r1_name || '';
+const n2 = race.r2_name || '';
+const n3 = race.r3_name || '';
+const n4 = race.r4_name || '';
+const n5 = race.r5_name || '';
+const n6 = race.r6_name || '';
 
     const prompt = `
 あなたはボートレース専門の予想AIです。
