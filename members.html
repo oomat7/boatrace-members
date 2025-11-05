@@ -19,25 +19,29 @@
     <div id="list">読み込み中…</div>
   </main>
 
-  <!-- Supabase 本体 -->
+  <!-- 1) Supabase 本体 -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-  <!-- 接続設定（ANON KEY など） -->
+
+  <!-- 2) 接続設定（ANON KEY が入っている config.js） -->
   <script src="config.js"></script>
 
+  <!-- 3) 会員ページの処理 -->
   <script>
-    // 今日の日付（YYYY-MM-DD）
+    // 今日の日付（YYYY-MM-DD）を返す
     function todayStr() {
       return new Date().toISOString().slice(0, 10);
     }
 
-    // セッション確認（未ログインなら index.html に戻す）
+    // ログインチェック（セッションがなければログイン画面へ戻す）
     async function requireSession() {
       const { data: { session } } = await supabaseClient.auth.getSession();
-      if (!session) location.href = 'index.html';
+      if (!session) {
+        location.href = 'index.html';
+      }
       return session;
     }
 
-    // 画面描画
+    // 画面への描画処理
     function render(items) {
       const root = document.getElementById('list');
 
@@ -54,68 +58,45 @@
         byStadium[key].push(p);
       }
 
-      // 場名順ソート
+      // 場名順にソート
       const stadiumNames = Object.keys(byStadium).sort((a, b) =>
         a.localeCompare(b, 'ja')
       );
 
       const html = stadiumNames.map((stadium) => {
-        // この場のレースを 1R → 12R の順にソート
+        // この場のレースを 1R→12R の順にソート
         const races = byStadium[stadium].sort(
           (a, b) => (a.race_no || 0) - (b.race_no || 0)
         );
 
-        const raceHtml = races.map((p) => {
-          // AI コメント：ai_comment → notes の順で優先
-          const aiComment = (p.ai_comment || p.notes || '').toString();
-          // 選手名情報（drivers カラム想定）
-          const drivers = (p.drivers || '').toString();
-
-          return `
-            <details class="pred" open>
-              <summary class="pred-header">
-                <div>
-                  <b>${p.race_no}R</b>
-                  ${p.tier ? `<span class="tier">（${p.tier}）</span>` : ''}
-                </div>
-                <div class="meta">
-                  <small>${p.race_date || ''}</small>
-                  ${p.cutoff_time ? `<small>締切 ${p.cutoff_time}</small>` : ''}
-                  ${p.version ? `<small>v${p.version}</small>` : ''}
-                </div>
-              </summary>
-
-              <div class="pred-body">
-                <div class="picks">
-                  <b>${p.picks || ''}</b>
-                </div>
-
-                ${
-                  drivers
-                    ? `<div class="drivers">
-                        <strong>出走メンバー</strong><br>
-                        ${drivers.replace(/\n/g, '<br>')}
-                       </div>`
-                    : ''
-                }
-
-                ${
-                  aiComment
-                    ? `<div class="notes">
-                         ${aiComment.replace(/\n/g, '<br>')}
-                       </div>`
-                    : ''
-                }
+        // 各レースはカード表示のみ（レース単位では折り畳まない）
+        const raceHtml = races.map((p) => `
+          <article class="pred">
+            <header class="pred-header">
+              <div>
+                <b>${p.race_no}R</b>
+                ${p.tier ? `<span class="tier">（${p.tier}）</span>` : ''}
               </div>
-            </details>
-          `;
-        }).join('');
+              <div class="meta">
+                <small>${p.race_date}${p.version ? ` v${p.version}` : ''}</small>
+                ${p.deadline ? `<small>締切 ${p.deadline}</small>` : ''}
+              </div>
+            </header>
+            <div class="picks"><b>${p.picks || ''}</b></div>
+            ${
+              p.notes
+                ? `<div class="notes">${String(p.notes).replace(/\n/g, '<br>')}</div>`
+                : ''
+            }
+          </article>
+        `).join('');
 
+        // ✅ 競艇場ごとにだけ折り畳み
         return `
-          <section class="stadium-block">
-            <h3 class="stadium-title">${stadium}</h3>
+          <details class="stadium-block" open>
+            <summary class="stadium-title">${stadium}</summary>
             ${raceHtml}
-          </section>
+          </details>
         `;
       }).join('');
 
@@ -132,8 +113,8 @@
           .from('predictions')
           .select('*')
           .eq('race_date', today)
-          .order('stadium', { ascending: true })
-          .order('race_no', { ascending: true });
+          .order('stadium', { ascending: true }) // 場ごと
+          .order('race_no', { ascending: true }); // 1R→12R 順
 
         if (error) {
           console.error(error);
@@ -150,14 +131,14 @@
       }
     }
 
-    // ログアウト
+    // ログアウトボタン
     document.getElementById('logout').onclick = async (e) => {
       e.preventDefault();
       await supabaseClient.auth.signOut();
       location.href = 'index.html';
     };
 
-    // 初回表示＋1分ごと自動更新
+    // 初回表示 ＋ 1分ごとに自動更新
     fetchAndRender();
     setInterval(fetchAndRender, 60 * 1000);
   </script>
