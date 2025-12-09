@@ -11,14 +11,48 @@
   </head>
 
   <body>
-    <!-- 上部バー -->
+    <!-- 上の黒バー -->
     <div class="bar">
-      <div></div>
+      <div class="bar-left"></div>
       <div class="bar-right">会員専用ログイン</div>
     </div>
 
-    <!-- 画面中央タイトル -->
+    <!-- 中央タイトル -->
     <div class="site-title-box">
-      <div class="site-title-main">AI BOATRACE MEMBERS</div>
-      <div class="site-title-sub">BOATRACE PREMIUM AI PREDICTION</div>
+      <div class="site-title-main">ボート予想 会員サイト</div>
     </div>
+
+    <main class="page">
+      <section class="card">
+        <h1 class="title-center">ログイン</h1>
+        <p class="muted">
+          登録したメールアドレスとパスワードを入力してください。
+        </p>
+
+        <!-- 入力欄を中央寄せ -->
+        <div class="input-wrap">
+          <label for="email">メールアドレス</label>
+          <input id="email" type="email" placeholder="example@domain.com" />
+
+          <label for="password">パスワード</label>
+          <input id="password" type="password" placeholder="8文字以上" />
+        </div>
+
+        <!-- ボタン縦並び -->
+        <div class="col">
+          <button id="signup-btn" class="btn-full">新規登録</button>
+          <button id="login-btn" class="primary btn-full">ログイン</button>
+        </div>
+
+        <p id="msg" class="muted"></p>
+
+        <p class="muted">
+          手動で開く場合： <br />
+          <a href="members.html" class="link">会員ページはこちら</a>
+        </p>
+      </section>
+
+      <div class="footer">© 2025 AI BOATRACE LAB</div>
+    </main>
+  </body>
+</html>
