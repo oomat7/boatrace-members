@@ -1,187 +1,63 @@
-:root {
-  font-family: -apple-system, system-ui, "Segoe UI", Roboto, "Noto Sans JP",
-    sans-serif;
-}
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <title>ボート予想 会員サイト - ログイン</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="styles.css" />
+    <!-- SupabaseのJS（あとで本格ログイン処理をつなぐ用） -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2" defer></script>
+    <script src="config.js" defer></script>
+    <!-- TODO: ログイン処理用のスクリプトは後で作る -->
+  </head>
+  <body>
+    <div class="bar">
+      <div>
+        <div class="bar-title"><span>AI</span> BOATRACE MEMBERS</div>
+        <div class="bar-sub">BOATRACE PREMIUM AI PREDICTION</div>
+      </div>
+      <div class="bar-right">会員専用ログイン</div>
+    </div>
 
-/* 全体 */
-body {
-  margin: 0;
-  min-height: 100vh;
-  background: radial-gradient(circle at top, #151518 0%, #050508 55%, #000 100%);
-  color: #f9fafb;
-}
+    <main class="page">
+      <section class="card">
+        <h1>ログイン</h1>
+        <p class="muted">登録したメールアドレスとパスワードを入力してください。</p>
 
-/* 上のバー（タイトル） */
-.bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 14px 18px;
-  background: rgba(10, 10, 16, 0.95);
-  border-bottom: 1px solid rgba(148, 163, 184, 0.35);
-  position: sticky;
-  top: 0;
-  backdrop-filter: blur(10px);
-  z-index: 10;
-}
+        <label for="email">メールアドレス</label>
+        <input
+          id="email"
+          type="email"
+          placeholder="example@domain.com"
+          autocomplete="email"
+        />
 
-.bar-title {
-  font-size: 18px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
+        <label for="password">パスワード</label>
+        <input
+          id="password"
+          type="password"
+          placeholder="パスワード"
+          autocomplete="current-password"
+        />
 
-.bar-title span {
-  color: #fbbf24; /* ゴールド */
-}
+        <div class="row">
+          <button id="signup-btn">新規登録</button>
+          <button id="login-btn" class="primary">ログイン</button>
+        </div>
 
-.bar-sub {
-  font-size: 11px;
-  color: #9ca3af;
-}
+        <div id="msg" class="muted">
+          ログインに成功すると、自動的に会員ページへ移動します。
+        </div>
 
-.bar-right {
-  font-size: 11px;
-  color: #9ca3af;
-}
+        <p class="muted">
+          手動で開く場合：<br />
+          <a href="members.html" style="color:#fbbf24; text-decoration:underline;">
+            会員ページはこちら
+          </a>
+        </p>
+      </section>
 
-/* 中央のカード（ログイン画面など） */
-.page {
-  max-width: 720px;
-  margin: 32px auto;
-  padding: 0 16px 40px;
-}
-
-.card {
-  background: radial-gradient(circle at top left, #1f2937 0%, #020617 55%, #020617 100%);
-  border-radius: 16px;
-  padding: 22px 20px 20px;
-  border: 1px solid rgba(148, 163, 184, 0.55);
-  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.85);
-}
-
-/* ログインカード内の見出し */
-.card h1 {
-  font-size: 18px;
-  margin: 0 0 4px;
-}
-
-.card .muted {
-  font-size: 12px;
-  color: #9ca3af;
-}
-
-/* フォーム周り */
-label {
-  display: block;
-  margin: 14px 0 6px;
-  font-weight: 600;
-  font-size: 13px;
-}
-
-input {
-  width: 100%;
-  padding: 11px 10px;
-  border: 1px solid #4b5563;
-  border-radius: 8px;
-  background: rgba(15, 23, 42, 0.9);
-  color: #f9fafb;
-  font-size: 13px;
-}
-
-input::placeholder {
-  color: #6b7280;
-}
-
-/* ボタン行 */
-.row {
-  display: flex;
-  gap: 8px;
-  margin-top: 16px;
-}
-
-button {
-  flex: 1;
-  padding: 11px;
-  border-radius: 999px;
-  border: 1px solid #4b5563;
-  background: rgba(15, 23, 42, 0.9);
-  font-weight: 600;
-  font-size: 13px;
-  color: #e5e7eb;
-  cursor: pointer;
-  transition: transform 0.08s ease-out, box-shadow 0.08s ease-out,
-    background 0.08s ease-out, border-color 0.08s ease-out;
-}
-
-button.primary {
-  background: linear-gradient(135deg, #fbbf24, #f97316);
-  color: #111827;
-  border-color: #facc15;
-}
-
-button:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.85);
-}
-
-/* メッセージ表示 */
-#msg {
-  margin-top: 12px;
-  font-size: 12px;
-  color: #e5e7eb;
-}
-
-#msg.err {
-  color: #fca5a5;
-}
-
-/* 会員ページ用の予想カード */
-.pred {
-  border: 1px solid rgba(148, 163, 184, 0.6);
-  border-radius: 12px;
-  padding: 12px 12px 10px;
-  margin: 12px 0;
-  background: radial-gradient(circle at top left, #111827 0%, #020617 65%);
-}
-
-.pred-header {
-  display: flex;
-  justify-content: space-between;
-  font-size: 13px;
-  margin-bottom: 4px;
-}
-
-.pred-label {
-  color: #fbbf24;
-  text-transform: uppercase;
-  letter-spacing: 0.09em;
-  font-size: 11px;
-}
-
-.pred-picks {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
-    "Liberation Mono", "Courier New", monospace;
-  font-size: 12px;
-  margin-top: 4px;
-}
-
-.notes {
-  color: #e5e7eb;
-  margin-top: 6px;
-  font-size: 12px;
-}
-
-.muted {
-  color: #9ca3af;
-  font-size: 11px;
-  margin-top: 10px;
-}
-
-/* フッター */
-.footer {
-  margin-top: 18px;
-  text-align: right;
-  font-size: 11px;
-  color: #6b7280;
-}
+      <div class="footer">© 2025 AI BOATRACE LAB</div>
+    </main>
+  </body>
+</html>
