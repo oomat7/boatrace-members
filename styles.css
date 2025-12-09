@@ -187,11 +187,13 @@ button:hover {
   margin-bottom: 6px;
 }
 
+/* ★ 親に依存せず、これ自体に高さを持たせるように変更 ★ */
 .password-strength-bar-inner {
-  height: 100%;
+  display: block;
+  height: 6px;          /* ← ここを 100% ではなく 6px にする */
   width: 0%;
   border-radius: 999px;
-  background: #ef4444; /* default weak */
+  background: #ef4444;  /* 弱：赤 */
   transition: width 0.15s ease-out, background 0.15s ease-out;
 }
 
