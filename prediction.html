@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <title>本日のAIボート予想 - 会員専用</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="styles.css" />
+
+    <script src="https://unpkg.com/@supabase/supabase-js@2" defer></script>
+    <script src="config.js" defer></script>
+  </head>
+
+  <body>
+    <!-- 上のバー -->
+    <header class="bar">
+      <div class="bar-left">
+        <div class="brand-main">
+          <span>AI</span> BOATRACE MEMBERS
+        </div>
+        <div class="brand-sub">BOATRACE PREMIUM AI PREDICTION</div>
+      </div>
+      <div class="bar-right">本日の予想</div>
+    </header>
+
+    <main class="page">
+      <section class="card">
+        <h1 class="title-center">本日のAIボート予想</h1>
+        <p class="muted" id="status-text">会員ステータスを確認中です...</p>
+
+        <!-- ここに予想コンテンツを表示する -->
+        <div id="prediction-content" class="input-wrap" style="margin-top: 18px">
+          <p class="muted">
+            ※この中身は後でモグオがJSONから生成した予想などを入れる想定。<br />
+            ひとまずテンプレだけ作っておく。
+          </p>
+
+          <div
+            style="
+              margin-top: 12px;
+              padding: 14px;
+              border-radius: 14px;
+              border: 1px solid rgba(148, 163, 184, 0.6);
+              background: radial-gradient(circle at top left, #020617 0%, #000 55%);
+              font-size: 13px;
+            "
+          >
+            ここに「本日の予想テーブル」「買い目」などを表示していく。
+          </div>
+        </div>
+
+        <!-- アクセスNG時にだけ表示するエリア -->
+        <div
+          id="blocked-content"
+          class="input-wrap"
+          style="margin-top: 18px; display: none"
+        >
+          <p>
+            このページは
+            <strong>有料会員専用</strong>
+            です。
+          </p>
+          <p class="muted" id="blocked-reason" style="margin-top: 4px"></p>
+
+          <div class="btn-col" style="margin-top: 14px">
+            <button
+              type="button"
+              class="primary btn-full"
+              onclick="location.href='members.html'"
+            >
+              会員ページへ戻る
+            </button>
+            <button
+              type="button"
+              class="btn-full"
+              onclick="location.href='index.html'"
+            >
+              ログインページへ
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <div class="footer">© 2025 AI BOATRACE LAB</div>
+    </main>
+
+    <script>
+      // 本番で true にすると「access_until が無いユーザーは閲覧NG」になる
+      // 開発・テスト中は false のままで OK（全員閲覧可能）
+      const REQUIRE_PAID_MEMBER = false;
+
+      function buildAccessInfo(meta) {
+        const raw = meta && meta.access_until;
+        if (!raw) {
+          return {
+            hasAccessField: false,
+            active: !REQUIRE_PAID_MEMBER, // テストモードなら通す
+            accessText: "未設定",
+            statusText: REQUIRE_PAID_MEMBER
+              ? "有料会員の有効期限が設定されていません。"
+              : "開発中のため暫定的に閲覧を許可しています。",
+          };
+        }
+
+        const d = new Date(raw);
+        if (isNaN(d.getTime())) {
+          return {
+            hasAccessField: true,
+            active: false,
+            accessText: "不正な日付",
+            statusText: "有効期限の形式が不正です（管理者に確認してください）。",
+          };
+        }
+
+        const now = new Date();
+        const accessText = d.toLocaleString("ja-JP", {
+          timeZone: "Asia/Tokyo",
+        });
+
+        if (d.getTime() >= now.getTime()) {
+          return {
+            hasAccessField: true,
+            active: true,
+            accessText,
+            statusText: "有効（有料会員として閲覧可能）",
+          };
+        } else {
+          return {
+            hasAccessField: true,
+            active: false,
+            accessText,
+            statusText: "有効期限が切れています。プランの再購入が必要です。",
+          };
+        }
+      }
+
+      document.addEventListener("DOMContentLoaded", async () => {
+        const statusText = document.getElementById("status-text");
+        const predictionContent = document.getElementById("prediction-content");
+        const blockedContent = document.getElementById("blocked-content");
+        const blockedReason = document.getElementById("blocked-reason");
+
+        if (!window.supabaseClient) {
+          statusText.textContent =
+            "Supabaseの設定（config.js）が見つかりません。";
+          predictionContent.style.display = "none";
+          blockedContent.style.display = "block";
+          blockedReason.textContent =
+            "システム設定エラーのため、現在このページを表示できません。";
+          return;
+        }
+
+        // ログイン状態チェック
+        const {
+          data: { user },
+          error,
+        } = await window.supabaseClient.auth.getUser();
+
+        if (error || !user) {
+          statusText.textContent = "ログインが必要です。";
+          predictionContent.style.display = "none";
+          blockedContent.style.display = "block";
+          blockedReason.textContent =
+            "ログインしてから再度アクセスしてください。";
+          return;
+        }
+
+        const meta = user.user_metadata || {};
+        const info = buildAccessInfo(meta);
+
+        // ステータス表示だけしておく
+        statusText.textContent =
+          "会員ステータス：" + info.statusText + "（有効期限：" + info.accessText + "）";
+
+        if (info.active) {
+          // 閲覧OK
+          predictionContent.style.display = "block";
+          blockedContent.style.display = "none";
+        } else {
+          // 閲覧NG
+          predictionContent.style.display = "none";
+          blockedContent.style.display = "block";
+          blockedReason.textContent = info.statusText;
+        }
+      });
+    </script>
+  </body>
+</html>
