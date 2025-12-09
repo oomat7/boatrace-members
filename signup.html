@@ -30,7 +30,7 @@
         </p>
 
         <form id="signup-form" class="input-wrap">
-          <!-- ログインに使う情報 -->
+          <!-- ログイン情報 -->
           <label for="email">メールアドレス</label>
           <input
             id="email"
@@ -44,11 +44,39 @@
           <input
             id="password"
             type="password"
-            placeholder="8文字以上"
+            placeholder="8〜12文字（英大文字・小文字・数字・記号）"
             autocomplete="new-password"
             minlength="8"
+            maxlength="12"
             required
           />
+
+          <label for="password-confirm">パスワード（確認用）</label>
+          <input
+            id="password-confirm"
+            type="password"
+            placeholder="もう一度同じパスワードを入力"
+            autocomplete="new-password"
+            minlength="8"
+            maxlength="12"
+            required
+          />
+
+          <!-- パスワード強度＆ルール表示 -->
+          <div class="password-strength">
+            <div class="password-strength-header">
+              <span>パスワードの強度</span>
+              <span id="pw-strength-label">0%</span>
+            </div>
+            <div class="password-strength-bar">
+              <div id="pw-strength-bar-inner"></div>
+            </div>
+            <ul class="password-rules">
+              <li>8〜12文字以内</li>
+              <li>英数字（大文字・小文字・数字）をすべて含む</li>
+              <li>使用できる記号：<code>! @ # $ % ^ &amp; * ( ) _ - +</code></li>
+            </ul>
+          </div>
 
           <!-- 表示名 -->
           <label for="name">お名前（ニックネーム可）</label>
@@ -89,7 +117,7 @@
             </label>
           </div>
 
-          <!-- 任意のメモ -->
+          <!-- 任意メモ -->
           <label for="note">備考（任意）</label>
           <input
             id="note"
@@ -118,15 +146,55 @@
     </main>
 
     <script>
+      // パスワードのチェック関数
+      function validatePassword(pw) {
+        // 8〜12文字 / 必須: 小文字・大文字・数字
+        const pattern =
+          /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d!@#$%^&*()_\-+]{8,12}$/;
+        return pattern.test(pw);
+      }
+
+      function calcStrength(pw) {
+        let score = 0;
+        if (pw.length >= 8 && pw.length <= 12) score++;
+        if (/[a-z]/.test(pw)) score++;
+        if (/[A-Z]/.test(pw)) score++;
+        if (/\d/.test(pw)) score++;
+        if (/[!@#$%^&*()_\-+]/.test(pw)) score++;
+        return Math.round((score / 5) * 100); // 0〜100%
+      }
+
       document.addEventListener("DOMContentLoaded", () => {
         const form = document.getElementById("signup-form");
         const msgEl = document.getElementById("signup-msg");
+        const pwInput = document.getElementById("password");
+        const pwConfirmInput = document.getElementById("password-confirm");
+        const barInner = document.getElementById("pw-strength-bar-inner");
+        const label = document.getElementById("pw-strength-label");
+
+        // 入力中に強度を更新
+        pwInput.addEventListener("input", () => {
+          const pw = pwInput.value;
+          const percent = calcStrength(pw);
+          barInner.style.width = percent + "%";
+          label.textContent = percent + "%";
+
+          barInner.classList.remove("weak", "medium", "strong");
+          if (percent < 40) {
+            barInner.classList.add("weak");
+          } else if (percent < 80) {
+            barInner.classList.add("medium");
+          } else {
+            barInner.classList.add("strong");
+          }
+        });
 
         form.addEventListener("submit", async (e) => {
           e.preventDefault();
 
           const email = document.getElementById("email").value.trim();
-          const password = document.getElementById("password").value.trim();
+          const password = pwInput.value.trim();
+          const passwordConfirm = pwConfirmInput.value.trim();
           const name = document.getElementById("name").value.trim();
           const note = document.getElementById("note").value.trim();
 
@@ -136,9 +204,24 @@
           const paymentRadio = document.querySelector(
             'input[name="payment"]:checked'
           );
-
           const plan = planRadio ? planRadio.value : "lite";
           const payment = paymentRadio ? paymentRadio.value : "card";
+
+          msgEl.classList.remove("err");
+          msgEl.textContent = "";
+
+          if (password !== passwordConfirm) {
+            msgEl.textContent = "パスワードと確認用パスワードが一致しません。";
+            msgEl.classList.add("err");
+            return;
+          }
+
+          if (!validatePassword(password)) {
+            msgEl.textContent =
+              "パスワードは8〜12文字で、英大文字・小文字・数字をすべて含め、指定の記号のみ使用してください。";
+            msgEl.classList.add("err");
+            return;
+          }
 
           if (!window.supabaseClient) {
             msgEl.textContent =
@@ -148,8 +231,6 @@
           }
 
           msgEl.textContent = "登録処理中です...";
-          msgEl.classList.remove("err");
-
           const redirectUrl =
             "https://oomat7.github.io/boatrace-members/signup-complete.html";
 
