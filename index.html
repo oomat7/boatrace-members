@@ -1,70 +1,63 @@
 <!doctype html>
 <html lang="ja">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>ボート予想 会員サイト - ログイン</title>
-  <link rel="stylesheet" href="styles.css" />
-</head>
-<body>
-  <main class="card">
-    <h1>ボート予想 会員サイト</h1>
-
-    <label>メール</label>
-    <input id="email" type="email" placeholder="you@example.com" autocomplete="email" />
-    <label>パスワード</label>
-    <input id="password" type="password" placeholder="8文字以上" autocomplete="current-password" />
-
-    <div class="row">
-      <button id="signup">新規登録</button>
-      <button id="login" class="primary">ログイン</button>
+  <head>
+    <meta charset="utf-8" />
+    <title>ボート予想 会員サイト - ログイン</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="styles.css" />
+    <!-- SupabaseのJS（あとで本格ログイン処理をつなぐ用） -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2" defer></script>
+    <script src="config.js" defer></script>
+    <!-- TODO: ログイン処理用のスクリプトは後で作る -->
+  </head>
+  <body>
+    <div class="bar">
+      <div>
+        <div class="bar-title"><span>AI</span> BOATRACE MEMBERS</div>
+        <div class="bar-sub">BOATRACE PREMIUM AI PREDICTION</div>
+      </div>
+      <div class="bar-right">会員専用ログイン</div>
     </div>
 
-    <p id="msg"></p>
-    <p class="muted">ログインできたら <a href="members.html">会員ページへ</a></p>
-  </main>
+    <main class="page">
+      <section class="card">
+        <h1>ログイン</h1>
+        <p class="muted">登録したメールアドレスとパスワードを入力してください。</p>
 
-  <!-- Supabase（CDN版）→ config.js の順で読み込み -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-  <script src="config.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="config.js"></script>
-<script>
-  const $ = (id) => document.getElementById(id);
-  const setMsg = (t, isErr = false) => {
-    const m = $('msg');
-    m.textContent = t;
-    m.className = isErr ? 'err' : '';
-  };
+        <label for="email">メールアドレス</label>
+        <input
+          id="email"
+          type="email"
+          placeholder="example@domain.com"
+          autocomplete="email"
+        />
 
-  // ★ ここで /boatrace-members/ を組み立てている
-  const redirectUrl = `${window.location.origin}/boatrace-members/`;
+        <label for="password">パスワード</label>
+        <input
+          id="password"
+          type="password"
+          placeholder="パスワード"
+          autocomplete="current-password"
+        />
 
-  document.getElementById('signup').onclick = async () => {
-    setMsg('登録中…');
-    const { data, error } = await window.supabaseClient.auth.signUp({
-      email: $('email').value.trim(),
-      password: $('password').value.trim(),
-      options: {
-        emailRedirectTo: redirectUrl,
-      },
-    });
+        <div class="row">
+          <button id="signup-btn">新規登録</button>
+          <button id="login-btn" class="primary">ログイン</button>
+        </div>
 
-    if (error) return setMsg('登録エラー：' + error.message, true);
-    setMsg('確認メールを送信しました。 メール内のリンクを押して完了してください。');
-  };
+        <div id="msg" class="muted">
+          ログインに成功すると、自動的に会員ページへ移動します。
+        </div>
 
-  document.getElementById('login').onclick = async () => {
-    setMsg('ログイン中…');
-    const { data, error } = await window.supabaseClient.auth.signInWithPassword({
-      email: $('email').value.trim(),
-      password: $('password').value.trim(),
-    });
+        <p class="muted">
+          手動で開く場合：<br />
+          <a href="members.html" style="color:#fbbf24; text-decoration:underline;">
+            会員ページはこちら
+          </a>
+        </p>
+      </section>
 
-    if (error) return setMsg('ログイン失敗：' + error.message, true);
-    setMsg('ログイン成功！数秒後に会員ページへ移動します。');
-    setTimeout(() => (location.href = 'members.html'), 600);
-  };
-</script>
-</body>
+      <div class="footer">© 2025 AI BOATRACE LAB</div>
+    </main>
+  </body>
 </html>
