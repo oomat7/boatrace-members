@@ -26,7 +26,8 @@
       <section class="card">
         <h1 class="title-center">新規会員登録</h1>
         <p class="muted">
-          ログインに使用する情報と、プラン・支払い方法を選択してください。
+          ログインに使用する情報を入力してください。<br />
+          プランの選択と決済は登録後（ログイン後）の画面で行います。
         </p>
 
         <form id="signup-form" class="input-wrap">
@@ -69,7 +70,6 @@
               <span id="pw-strength-label">0%</span>
             </div>
 
-            <!-- ★ここに親のバー枠を追加★ -->
             <div class="password-strength-bar">
               <div
                 id="pw-strength-bar-inner"
@@ -96,37 +96,7 @@
             required
           />
 
-          <!-- プラン選択 -->
-          <label>プランの選択</label>
-          <div class="plan-group">
-            <label class="plan-item">
-              <input type="radio" name="plan" value="lite" checked />
-              <span>ライトプラン（例：月1,280円）</span>
-            </label>
-            <label class="plan-item">
-              <input type="radio" name="plan" value="standard" />
-              <span>スタンダードプラン</span>
-            </label>
-            <label class="plan-item">
-              <input type="radio" name="plan" value="premium" />
-              <span>プレミアムプラン</span>
-            </label>
-          </div>
-
-          <!-- 支払い方法 -->
-          <label>支払い方法</label>
-          <div class="plan-group">
-            <label class="plan-item">
-              <input type="radio" name="payment" value="card" checked />
-              <span>クレジットカード（Stripe想定）</span>
-            </label>
-            <label class="plan-item disabled">
-              <input type="radio" name="payment" value="bank" disabled />
-              <span>銀行振込（準備中）</span>
-            </label>
-          </div>
-
-          <!-- 任意メモ -->
+          <!-- 備考（任意） -->
           <label for="note">備考（任意）</label>
           <input
             id="note"
@@ -205,14 +175,6 @@
           const passwordConfirm = pwConfirmInput.value.trim();
           const name = document.getElementById("name").value.trim();
           const note = document.getElementById("note").value.trim();
-          const planRadio = document.querySelector(
-            'input[name="plan"]:checked'
-          );
-          const paymentRadio = document.querySelector(
-            'input[name="payment"]:checked'
-          );
-          const plan = planRadio ? planRadio.value : "lite";
-          const payment = paymentRadio ? paymentRadio.value : "card";
 
           msgEl.classList.remove("err");
           msgEl.textContent = "";
@@ -251,8 +213,6 @@
               data: {
                 name,
                 note,
-                plan,
-                payment_method: payment,
               },
             },
           });
