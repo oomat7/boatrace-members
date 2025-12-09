@@ -3,7 +3,7 @@
     sans-serif;
 }
 
-/* 全体 */
+/* 背景 */
 body {
   margin: 0;
   min-height: 100vh;
@@ -11,79 +11,96 @@ body {
   color: #f9fafb;
 }
 
-/* 上のバー（タイトル） */
+/* 上のバー */
 .bar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 14px 18px;
-  background: rgba(10, 10, 16, 0.95);
+  padding: 14px 20px;
+  background: rgba(10, 10, 16, 0.96);
   border-bottom: 1px solid rgba(148, 163, 184, 0.35);
-  position: sticky;
-  top: 0;
-  backdrop-filter: blur(10px);
-  z-index: 10;
 }
 
-.bar-title {
+.bar-left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.brand-main {
   font-size: 18px;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
-.bar-title span {
-  color: #fbbf24; /* ゴールド */
+.brand-main span {
+  color: #fbbf24;
 }
 
-.bar-sub {
+.brand-sub {
   font-size: 11px;
   color: #9ca3af;
+  letter-spacing: 0.12em;
 }
 
 .bar-right {
-  font-size: 11px;
-  color: #9ca3af;
+  font-size: 12px;
+  color: #d1d5db;
 }
 
-/* 中央のカード（ログイン画面など） */
+/* レイアウト */
 .page {
-  max-width: 720px;
-  margin: 32px auto;
-  padding: 0 16px 40px;
+  max-width: 960px;
+  margin: 40px auto 40px;
+  padding: 0 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
+/* カード */
 .card {
-  background: radial-gradient(circle at top left, #1f2937 0%, #020617 55%, #020617 100%);
-  border-radius: 16px;
-  padding: 22px 20px 20px;
+  width: 520px;
+  max-width: 100%;
+  background: radial-gradient(circle at top left, #1f2937 0%, #020617 55%);
+  border-radius: 18px;
+  padding: 26px 26px 28px;
   border: 1px solid rgba(148, 163, 184, 0.55);
   box-shadow: 0 18px 45px rgba(0, 0, 0, 0.85);
 }
 
-/* ログインカード内の見出し */
-.card h1 {
-  font-size: 18px;
-  margin: 0 0 4px;
+.title-center {
+  text-align: center;
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 8px;
 }
 
-.card .muted {
+.muted {
   font-size: 12px;
   color: #9ca3af;
 }
 
-/* フォーム周り */
+/* 入力エリア（中央寄せ） */
+.input-wrap {
+  max-width: 90%;
+  margin: 14px auto 0;
+}
+
+/* ラベル */
 label {
   display: block;
   margin: 14px 0 6px;
+  font-size: 14px;
   font-weight: 600;
-  font-size: 13px;
 }
 
+/* 入力ボックス */
 input {
   width: 100%;
   padding: 11px 10px;
+  border-radius: 10px;
   border: 1px solid #4b5563;
-  border-radius: 8px;
   background: rgba(15, 23, 42, 0.9);
   color: #f9fafb;
   font-size: 13px;
@@ -93,25 +110,48 @@ input::placeholder {
   color: #6b7280;
 }
 
-/* ボタン行 */
-.row {
-  display: flex;
-  gap: 8px;
-  margin-top: 16px;
+/* プラン・支払い方法 */
+.plan-group {
+  margin-top: 6px;
+  margin-bottom: 6px;
+  padding-left: 4px;
 }
 
+.plan-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.plan-item.disabled {
+  opacity: 0.5;
+}
+
+/* ボタン縦並び */
+.btn-col {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.btn-full {
+  width: 100%;
+}
+
+/* ボタン */
 button {
-  flex: 1;
-  padding: 11px;
+  padding: 13px;
   border-radius: 999px;
   border: 1px solid #4b5563;
   background: rgba(15, 23, 42, 0.9);
-  font-weight: 600;
-  font-size: 13px;
   color: #e5e7eb;
+  font-weight: 600;
+  font-size: 14px;
   cursor: pointer;
-  transition: transform 0.08s ease-out, box-shadow 0.08s ease-out,
-    background 0.08s ease-out, border-color 0.08s ease-out;
+  transition: 0.1s ease-out;
 }
 
 button.primary {
@@ -122,66 +162,98 @@ button.primary {
 
 button:hover {
   transform: translateY(-1px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.85);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.85);
 }
 
-/* メッセージ表示 */
-#msg {
-  margin-top: 12px;
+/* パスワード強度 */
+.password-strength {
+  margin-top: 14px;
   font-size: 12px;
   color: #e5e7eb;
 }
 
-#msg.err {
-  color: #fca5a5;
-}
-
-/* 会員ページ用の予想カード */
-.pred {
-  border: 1px solid rgba(148, 163, 184, 0.6);
-  border-radius: 12px;
-  padding: 12px 12px 10px;
-  margin: 12px 0;
-  background: radial-gradient(circle at top left, #111827 0%, #020617 65%);
-}
-
-.pred-header {
+.password-strength-header {
   display: flex;
   justify-content: space-between;
-  font-size: 13px;
   margin-bottom: 4px;
 }
 
-.pred-label {
-  color: #fbbf24;
-  text-transform: uppercase;
-  letter-spacing: 0.09em;
-  font-size: 11px;
+.password-strength-bar {
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(31, 41, 55, 0.9);
+  overflow: hidden;
+  margin-bottom: 6px;
 }
 
-.pred-picks {
+.password-strength-bar-inner {
+  height: 100%;
+  width: 0%;
+  border-radius: 999px;
+  background: #ef4444; /* default weak */
+  transition: width 0.15s ease-out, background 0.15s ease-out;
+}
+
+#pw-strength-bar-inner.weak {
+  background: #ef4444;
+}
+
+#pw-strength-bar-inner.medium {
+  background: #f59e0b;
+}
+
+#pw-strength-bar-inner.strong {
+  background: #22c55e;
+}
+
+.password-rules {
+  list-style: none;
+  padding-left: 0;
+  margin: 4px 0 0;
+}
+
+.password-rules li {
+  margin-bottom: 2px;
+}
+
+.password-rules code {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
     "Liberation Mono", "Courier New", monospace;
-  font-size: 12px;
-  margin-top: 4px;
-}
-
-.notes {
-  color: #e5e7eb;
-  margin-top: 6px;
-  font-size: 12px;
-}
-
-.muted {
-  color: #9ca3af;
   font-size: 11px;
-  margin-top: 10px;
+}
+
+/* メッセージ */
+.err {
+  color: #fecaca;
+}
+
+/* リンク */
+.link {
+  color: #fbbf24;
+  text-decoration: underline;
 }
 
 /* フッター */
 .footer {
   margin-top: 18px;
-  text-align: right;
+  align-self: flex-end;
   font-size: 11px;
   color: #6b7280;
+}
+
+/* スマホ調整 */
+@media (max-width: 600px) {
+  .page {
+    margin-top: 24px;
+  }
+
+  .card {
+    width: 100%;
+    padding: 22px 18px 24px;
+  }
+
+  .input-wrap {
+    max-width: 100%;
+  }
 }
