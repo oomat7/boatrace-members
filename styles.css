@@ -3,6 +3,7 @@
     sans-serif;
 }
 
+/* 背景 */
 body {
   margin: 0;
   min-height: 100vh;
@@ -10,115 +11,129 @@ body {
   color: #f9fafb;
 }
 
-/* 上バー */
+/* 上の黒バー */
 .bar {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 14px 20px;
-  background: rgba(12, 12, 16, 0.9);
-  border-bottom: 1px solid rgba(120, 120, 140, 0.4);
+  background: rgba(10, 10, 16, 0.96);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.35);
+}
+
+.bar-left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.brand-main {
+  font-size: 18px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.brand-main span {
+  color: #fbbf24;
+}
+
+.brand-sub {
+  font-size: 11px;
+  color: #9ca3af;
+  letter-spacing: 0.12em;
 }
 
 .bar-right {
-  font-size: 13px;
+  font-size: 12px;
   color: #d1d5db;
 }
 
-/* 中央タイトル */
-.site-title-box {
-  text-align: center;
-  margin-top: 32px;
-  margin-bottom: 10px;
-}
-
-.site-title-main {
-  font-size: 32px;
-  font-weight: 700;
-  color: #fbbf24;
-  letter-spacing: 0.05em;
-}
-
-/* ページ幅 */
+/* 全体レイアウト：中央のカード用コンテナ */
 .page {
-  max-width: 460px;
-  margin: 0 auto;
-  padding: 0 12px 40px;
+  max-width: 960px;
+  margin: 40px auto 40px;
+  padding: 0 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
-/* カード */
+/* カード本体 */
 .card {
+  width: 520px;
+  max-width: 100%;
   background: radial-gradient(circle at top left, #1f2937 0%, #020617 55%);
-  border-radius: 16px;
-  padding: 26px;
-  border: 1px solid rgba(148, 163, 184, 0.45);
+  border-radius: 18px;
+  padding: 26px 26px 28px;
+  border: 1px solid rgba(148, 163, 184, 0.55);
   box-shadow: 0 18px 45px rgba(0, 0, 0, 0.85);
-  margin-top: 20px;
 }
 
-/* タイトル */
+/* ログインのタイトル */
 .title-center {
   text-align: center;
   font-size: 22px;
   font-weight: 700;
-  margin-bottom: 16px;
+  margin-bottom: 8px;
+}
+
+.muted {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+/* 入力欄エリア：カード内で少し細く＆中央寄せ */
+.input-wrap {
+  max-width: 90%;
+  margin: 14px auto 0;
 }
 
 /* ラベル */
 label {
   display: block;
-  margin: 18px 0 6px;
+  margin: 14px 0 6px;
   font-size: 14px;
   font-weight: 600;
 }
 
-/* 入力欄 */
-.input-wrap {
-  max-width: 85%;
-  margin: 0 auto;
-}
-
+/* 入力ボックス */
 input {
   width: 100%;
-  padding: 12px 10px;
-  border: 1px solid #4b5563;
+  padding: 11px 10px;
   border-radius: 10px;
-  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid #4b5563;
+  background: rgba(15, 23, 42, 0.9);
   color: #f9fafb;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 input::placeholder {
   color: #6b7280;
 }
 
-/* スマホ調整 */
-@media (max-width: 480px) {
-  .input-wrap {
-    max-width: 95%;
-  }
-}
-
 /* ボタン縦並び */
-.col {
+.btn-col {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-top: 24px;
+  gap: 10px;
+  margin-top: 22px;
 }
 
 .btn-full {
   width: 100%;
 }
 
+/* ボタン共通 */
 button {
-  padding: 14px;
-  font-size: 15px;
-  border-radius: 12px;
+  padding: 13px;
+  border-radius: 999px;
   border: 1px solid #4b5563;
   background: rgba(15, 23, 42, 0.9);
   color: #e5e7eb;
+  font-weight: 600;
+  font-size: 14px;
   cursor: pointer;
+  transition: 0.1s ease-out;
 }
 
 button.primary {
@@ -127,10 +142,37 @@ button.primary {
   border-color: #facc15;
 }
 
-/* Footer */
+button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.85);
+}
+
+/* リンク */
+.link {
+  color: #fbbf24;
+  text-decoration: underline;
+}
+
+/* フッター */
 .footer {
-  margin-top: 26px;
-  text-align: right;
+  margin-top: 18px;
+  align-self: flex-end;
   font-size: 11px;
   color: #6b7280;
+}
+
+/* スマホ調整 */
+@media (max-width: 600px) {
+  .page {
+    margin-top: 24px;
+  }
+
+  .card {
+    width: 100%;
+    padding: 22px 18px 24px;
+  }
+
+  .input-wrap {
+    max-width: 100%;
+  }
 }
