@@ -6,22 +6,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" href="styles.css" />
 
+    <!-- Supabase -->
     <script src="https://unpkg.com/@supabase/supabase-js@2" defer></script>
     <script src="config.js" defer></script>
   </head>
 
   <body>
-    <!-- 上の黒バー -->
-    <div class="bar">
-      <div class="bar-left"></div>
+    <!-- 上の黒いバー（ロゴ＋会員専用ログイン） -->
+    <header class="bar">
+      <div class="bar-left">
+        <div class="brand-main">
+          <span>AI</span> BOATRACE MEMBERS
+        </div>
+        <div class="brand-sub">BOATRACE PREMIUM AI PREDICTION</div>
+      </div>
       <div class="bar-right">会員専用ログイン</div>
-    </div>
+    </header>
 
-    <!-- 中央タイトル -->
-    <div class="site-title-box">
-      <div class="site-title-main">ボート予想 会員サイト</div>
-    </div>
-
+    <!-- 中央のログインカード -->
     <main class="page">
       <section class="card">
         <h1 class="title-center">ログイン</h1>
@@ -29,25 +31,37 @@
           登録したメールアドレスとパスワードを入力してください。
         </p>
 
-        <!-- 入力欄を中央寄せ -->
+        <!-- 入力欄（中央寄せ＆横幅少し細め） -->
         <div class="input-wrap">
           <label for="email">メールアドレス</label>
-          <input id="email" type="email" placeholder="example@domain.com" />
+          <input
+            id="email"
+            type="email"
+            placeholder="you@example.com"
+            autocomplete="email"
+          />
 
           <label for="password">パスワード</label>
-          <input id="password" type="password" placeholder="8文字以上" />
+          <input
+            id="password"
+            type="password"
+            placeholder="8文字以上"
+            autocomplete="current-password"
+          />
         </div>
 
-        <!-- ボタン縦並び -->
-        <div class="col">
+        <!-- ボタン（縦並び） -->
+        <div class="btn-col">
           <button id="signup-btn" class="btn-full">新規登録</button>
           <button id="login-btn" class="primary btn-full">ログイン</button>
         </div>
 
-        <p id="msg" class="muted"></p>
+        <p id="msg" class="muted">
+          ログインに成功すると、自動的に会員ページへ移動します。
+        </p>
 
         <p class="muted">
-          手動で開く場合： <br />
+          手動で開く場合：<br />
           <a href="members.html" class="link">会員ページはこちら</a>
         </p>
       </section>
