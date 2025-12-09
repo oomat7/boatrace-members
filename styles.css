@@ -1,3 +1,265 @@
+:root {
+  font-family: -apple-system, system-ui, "Segoe UI", Roboto, "Noto Sans JP",
+    sans-serif;
+}
+
+/* 背景 */
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: radial-gradient(circle at top, #151518 0%, #050508 55%, #000 100%);
+  color: #f9fafb;
+}
+
+/* 上のバー */
+.bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 20px;
+  background: rgba(10, 10, 16, 0.96);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.35);
+}
+
+.bar-left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.brand-main {
+  font-size: 18px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.brand-main span {
+  color: #fbbf24;
+}
+
+.brand-sub {
+  font-size: 11px;
+  color: #9ca3af;
+  letter-spacing: 0.12em;
+}
+
+.bar-right {
+  font-size: 12px;
+  color: #d1d5db;
+}
+
+/* レイアウト */
+.page {
+  max-width: 960px;
+  margin: 40px auto 40px;
+  padding: 0 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* カード */
+.card {
+  width: 520px;
+  max-width: 100%;
+  background: radial-gradient(circle at top left, #1f2937 0%, #020617 55%);
+  border-radius: 18px;
+  padding: 26px 26px 28px;
+  border: 1px solid rgba(148, 163, 184, 0.55);
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.85);
+}
+
+.title-center {
+  text-align: center;
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.muted {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+/* 入力エリア（中央寄せ） */
+.input-wrap {
+  max-width: 90%;
+  margin: 14px auto 0;
+}
+
+/* ラベル */
+label {
+  display: block;
+  margin: 14px 0 6px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* 入力ボックス */
+input {
+  width: 100%;
+  padding: 11px 10px;
+  border-radius: 10px;
+  border: 1px solid #4b5563;
+  background: rgba(15, 23, 42, 0.9);
+  color: #f9fafb;
+  font-size: 13px;
+}
+
+input::placeholder {
+  color: #6b7280;
+}
+
+/* プラン・支払い方法 */
+.plan-group {
+  margin-top: 6px;
+  margin-bottom: 6px;
+  padding-left: 4px;
+}
+
+.plan-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.plan-item.disabled {
+  opacity: 0.5;
+}
+
+/* ボタン縦並び */
+.btn-col {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.btn-full {
+  width: 100%;
+}
+
+/* ボタン */
+button {
+  padding: 13px;
+  border-radius: 999px;
+  border: 1px solid #4b5563;
+  background: rgba(15, 23, 42, 0.9);
+  color: #e5e7eb;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: 0.1s ease-out;
+}
+
+button.primary {
+  background: linear-gradient(135deg, #fbbf24, #f97316);
+  color: #111827;
+  border-color: #facc15;
+}
+
+button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.85);
+}
+
+/* パスワード強度 */
+.password-strength {
+  margin-top: 14px;
+  font-size: 12px;
+  color: #e5e7eb;
+}
+
+.password-strength-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.password-strength-bar {
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(31, 41, 55, 0.9);
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+
+/* ★ 親に依存せず、これ自体に高さを持たせるように変更 ★ */
+.password-strength-bar-inner {
+  display: block;
+  height: 6px;          /* ← ここを 100% ではなく 6px にする */
+  width: 0%;
+  border-radius: 999px;
+  background: #ef4444;  /* 弱：赤 */
+  transition: width 0.15s ease-out, background 0.15s ease-out;
+}
+
+#pw-strength-bar-inner.weak {
+  background: #ef4444;
+}
+
+#pw-strength-bar-inner.medium {
+  background: #f59e0b;
+}
+
+#pw-strength-bar-inner.strong {
+  background: #22c55e;
+}
+
+.password-rules {
+  list-style: none;
+  padding-left: 0;
+  margin: 4px 0 0;
+}
+
+.password-rules li {
+  margin-bottom: 2px;
+}
+
+.password-rules code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+  font-size: 11px;
+}
+
+/* メッセージ */
+.err {
+  color: #fecaca;
+}
+
+/* リンク */
+.link {
+  color: #fbbf24;
+  text-decoration: underline;
+}
+
+/* フッター */
+.footer {
+  margin-top: 18px;
+  align-self: flex-end;
+  font-size: 11px;
+  color: #6b7280;
+}
+
+/* スマホ調整 */
+@media (max-width: 600px) {
+  .page {
+    margin-top: 24px;
+  }
+
+  .card {
+    width: 100%;
+    padding: 22px 18px 24px;
+  }
+
+  .input-wrap {
+    max-width: 100%;
+  }
+}
+
 /* プランカード一覧 */
 .plan-cards {
   display: flex;
