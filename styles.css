@@ -3,7 +3,7 @@
     sans-serif;
 }
 
-/* 全体背景 */
+/* 全体 */
 body {
   margin: 0;
   min-height: 100vh;
@@ -11,54 +11,74 @@ body {
   color: #f9fafb;
 }
 
-/* ページタイトル（中央・大きく・強調） */
-.page-header {
-  text-align: center;
-  padding: 26px 12px 10px;
+/* 上のバー（タイトル） */
+.bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 18px;
+  background: rgba(10, 10, 16, 0.95);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.35);
+  position: sticky;
+  top: 0;
+  backdrop-filter: blur(10px);
+  z-index: 10;
 }
 
-.page-title {
-  font-size: 28px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
+.bar-title {
+  font-size: 18px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
-.page-title span {
+.bar-title span {
   color: #fbbf24; /* ゴールド */
 }
 
-/* カードをスリムに */
-.page {
-  max-width: 480px;
-  margin: 0 auto;
-  padding: 0 12px 40px;
+.bar-sub {
+  font-size: 11px;
+  color: #9ca3af;
 }
 
-/* カード本体 */
+.bar-right {
+  font-size: 11px;
+  color: #9ca3af;
+}
+
+/* 中央のカード（ログイン画面など） */
+.page {
+  max-width: 720px;
+  margin: 32px auto;
+  padding: 0 16px 40px;
+}
+
 .card {
-  background: radial-gradient(circle at top left, #1f2937 0%, #020617 55%);
+  background: radial-gradient(circle at top left, #1f2937 0%, #020617 55%, #020617 100%);
   border-radius: 16px;
-  padding: 26px 24px 28px;
+  padding: 22px 20px 20px;
   border: 1px solid rgba(148, 163, 184, 0.55);
   box-shadow: 0 18px 45px rgba(0, 0, 0, 0.85);
 }
 
-.title-center {
-  text-align: center;
-  font-size: 22px;
-  font-weight: 700;
-  margin-bottom: 6px;
+/* ログインカード内の見出し */
+.card h1 {
+  font-size: 18px;
+  margin: 0 0 4px;
 }
 
-/* ラベル */
+.card .muted {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+/* フォーム周り */
 label {
   display: block;
-  margin: 18px 0 6px;
+  margin: 14px 0 6px;
   font-weight: 600;
-  font-size: 14px;
+  font-size: 13px;
 }
 
-/* 入力欄 */
 input {
   width: 100%;
   padding: 11px 10px;
@@ -73,28 +93,25 @@ input::placeholder {
   color: #6b7280;
 }
 
-/* 縦並びのボタン */
-.col {
+/* ボタン行 */
+.row {
   display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-top: 22px;
+  gap: 8px;
+  margin-top: 16px;
 }
 
-.btn-full {
-  width: 100%;
-}
-
-/* ボタン */
 button {
-  padding: 13px;
-  font-size: 14px;
-  border-radius: 12px;
+  flex: 1;
+  padding: 11px;
+  border-radius: 999px;
   border: 1px solid #4b5563;
   background: rgba(15, 23, 42, 0.9);
+  font-weight: 600;
+  font-size: 13px;
   color: #e5e7eb;
   cursor: pointer;
-  transition: 0.1s ease-out;
+  transition: transform 0.08s ease-out, box-shadow 0.08s ease-out,
+    background 0.08s ease-out, border-color 0.08s ease-out;
 }
 
 button.primary {
@@ -105,10 +122,10 @@ button.primary {
 
 button:hover {
   transform: translateY(-1px);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.85);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.85);
 }
 
-/* メッセージ */
+/* メッセージ表示 */
 #msg {
   margin-top: 12px;
   font-size: 12px;
@@ -119,10 +136,46 @@ button:hover {
   color: #fca5a5;
 }
 
-/* リンク */
-.link {
+/* 会員ページ用の予想カード */
+.pred {
+  border: 1px solid rgba(148, 163, 184, 0.6);
+  border-radius: 12px;
+  padding: 12px 12px 10px;
+  margin: 12px 0;
+  background: radial-gradient(circle at top left, #111827 0%, #020617 65%);
+}
+
+.pred-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.pred-label {
   color: #fbbf24;
-  text-decoration: underline;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  font-size: 11px;
+}
+
+.pred-picks {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.notes {
+  color: #e5e7eb;
+  margin-top: 6px;
+  font-size: 12px;
+}
+
+.muted {
+  color: #9ca3af;
+  font-size: 11px;
+  margin-top: 10px;
 }
 
 /* フッター */
