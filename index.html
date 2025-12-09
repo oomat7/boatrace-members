@@ -5,30 +5,27 @@
     <title>ボート予想 会員サイト - ログイン</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" href="styles.css" />
-    <!-- SupabaseのJS（あとで本格ログイン処理をつなぐ用） -->
+
+    <!-- Supabase -->
     <script src="https://unpkg.com/@supabase/supabase-js@2" defer></script>
     <script src="config.js" defer></script>
-    <!-- TODO: ログイン処理用のスクリプトは後で作る -->
   </head>
+
   <body>
-    <div class="bar">
-      <div>
-        <div class="bar-title"><span>AI</span> BOATRACE MEMBERS</div>
-        <div class="bar-sub">BOATRACE PREMIUM AI PREDICTION</div>
-      </div>
-      <div class="bar-right">会員専用ログイン</div>
+    <div class="page-header">
+      <div class="page-title"><span>ボート予想</span> 会員サイト</div>
     </div>
 
     <main class="page">
       <section class="card">
-        <h1>ログイン</h1>
+        <h1 class="title-center">ログイン</h1>
         <p class="muted">登録したメールアドレスとパスワードを入力してください。</p>
 
         <label for="email">メールアドレス</label>
         <input
           id="email"
           type="email"
-          placeholder="example@domain.com"
+          placeholder="you@example.com"
           autocomplete="email"
         />
 
@@ -36,28 +33,10 @@
         <input
           id="password"
           type="password"
-          placeholder="パスワード"
+          placeholder="8文字以上"
           autocomplete="current-password"
         />
 
-        <div class="row">
-          <button id="signup-btn">新規登録</button>
-          <button id="login-btn" class="primary">ログイン</button>
-        </div>
-
-        <div id="msg" class="muted">
-          ログインに成功すると、自動的に会員ページへ移動します。
-        </div>
-
-        <p class="muted">
-          手動で開く場合：<br />
-          <a href="members.html" style="color:#fbbf24; text-decoration:underline;">
-            会員ページはこちら
-          </a>
-        </p>
-      </section>
-
-      <div class="footer">© 2025 AI BOATRACE LAB</div>
-    </main>
-  </body>
-</html>
+        <!-- ← ボタン縦並び -->
+        <div class="col">
+          <button id="signup-btn" class="btn-f
