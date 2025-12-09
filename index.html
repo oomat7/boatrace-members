@@ -5,61 +5,128 @@
     <title>ボート予想 会員サイト - ログイン</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" href="styles.css" />
-    <!-- SupabaseのJS（あとで本格ログイン処理をつなぐ用） -->
+
+    <!-- Supabase v2 + 設定 -->
     <script src="https://unpkg.com/@supabase/supabase-js@2" defer></script>
     <script src="config.js" defer></script>
-    <!-- TODO: ログイン処理用のスクリプトは後で作る -->
   </head>
+
   <body>
-    <div class="bar">
-      <div>
-        <div class="bar-title"><span>AI</span> BOATRACE MEMBERS</div>
-        <div class="bar-sub">BOATRACE PREMIUM AI PREDICTION</div>
+    <!-- 上のバー -->
+    <header class="bar">
+      <div class="bar-left">
+        <div class="brand-main">
+          <span>AI</span> BOATRACE MEMBERS
+        </div>
+        <div class="brand-sub">BOATRACE PREMIUM AI PREDICTION</div>
       </div>
       <div class="bar-right">会員専用ログイン</div>
-    </div>
+    </header>
 
+    <!-- 中央のログインカード -->
     <main class="page">
       <section class="card">
-        <h1>ログイン</h1>
-        <p class="muted">登録したメールアドレスとパスワードを入力してください。</p>
+        <h1 class="title-center">ログイン</h1>
+        <p class="muted">
+          登録したメールアドレスとパスワードを入力してください。
+        </p>
 
-        <label for="email">メールアドレス</label>
-        <input
-          id="email"
-          type="email"
-          placeholder="example@domain.com"
-          autocomplete="email"
-        />
+        <!-- ログインフォーム -->
+        <form id="login-form" class="input-wrap">
+          <label for="email">メールアドレス</label>
+          <input
+            id="email"
+            type="email"
+            placeholder="you@example.com"
+            autocomplete="email"
+            required
+          />
 
-        <label for="password">パスワード</label>
-        <input
-          id="password"
-          type="password"
-          placeholder="パスワード"
-          autocomplete="current-password"
-        />
+          <label for="password">パスワード</label>
+          <input
+            id="password"
+            type="password"
+            placeholder="パスワード"
+            autocomplete="current-password"
+            required
+          />
 
-        <div class="row">
-          <button id="signup-btn" class="btn-full" onclick="location.href='signup.html'">
-  新規会員登録
-</button>
-          <button id="login-btn" class="primary">ログイン</button>
-        </div>
+          <div class="btn-col" style="margin-top: 22px">
+            <!-- 新規登録へ遷移 -->
+            <button
+              type="button"
+              class="btn-full"
+              onclick="location.href='signup.html'"
+            >
+              新規会員登録
+            </button>
 
-        <div id="msg" class="muted">
-          ログインに成功すると、自動的に会員ページへ移動します。
-        </div>
+            <!-- ログイン実行ボタン -->
+            <button type="submit" id="login-btn" class="primary btn-full">
+              ログイン
+            </button>
+          </div>
+
+          <p id="msg" class="muted" style="margin-top: 10px"></p>
+        </form>
+
+        <p class="muted" style="margin-top: 12px">
+          パスワードを忘れた場合は
+          <a href="forgot-password.html" class="link">こちら</a>
+          から再設定できます。
+        </p>
 
         <p class="muted">
-          手動で開く場合：<br />
-          <a href="members.html" style="color:#fbbf24; text-decoration:underline;">
-            会員ページはこちら
-          </a>
+          手動で会員ページを開く場合：<br />
+          <a href="members.html" class="link">会員ページはこちら</a>
         </p>
       </section>
 
       <div class="footer">© 2025 AI BOATRACE LAB</div>
     </main>
+
+    <!-- ログイン処理 -->
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const form = document.getElementById("login-form");
+        const msgEl = document.getElementById("msg");
+
+        form.addEventListener("submit", async (e) => {
+          e.preventDefault();
+          msgEl.classList.remove("err");
+          msgEl.textContent = "";
+
+          const email = document.getElementById("email").value.trim();
+          const password = document.getElementById("password").value.trim();
+
+          if (!window.supabaseClient) {
+            msgEl.textContent =
+              "Supabaseの設定（config.js）が見つかりません。URLとキーを確認してください。";
+            msgEl.classList.add("err");
+            return;
+          }
+
+          msgEl.textContent = "ログイン処理中です...";
+
+          const { data, error } =
+            await window.supabaseClient.auth.signInWithPassword({
+              email,
+              password,
+            });
+
+          if (error) {
+            msgEl.textContent = "ログインエラー： " + error.message;
+            msgEl.classList.add("err");
+            return;
+          }
+
+          // ログインに成功したら会員ページへ
+          msgEl.textContent = "ログインに成功しました。会員ページへ移動します。";
+          setTimeout(() => {
+            location.href = "members.html";
+          }, 1000);
+        });
+      });
+    </script>
   </body>
 </html>
