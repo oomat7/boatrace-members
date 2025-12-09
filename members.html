@@ -27,45 +27,74 @@
         <h1 class="title-center">会員ページ</h1>
         <p class="muted" id="welcome-text">ログイン情報を取得中です...</p>
 
+        <!-- ユーザー情報表示 -->
         <div class="input-wrap" style="margin-top: 18px">
           <p>
             <strong>登録メールアドレス：</strong>
             <span id="user-email">-</span>
           </p>
           <p>
-            <strong>選択プラン：</strong>
-            <span id="user-plan">-</span>
-          </p>
-          <p>
-            <strong>支払い方法：</strong>
-            <span id="user-payment">-</span>
+            <strong>現在のプラン：</strong>
+            <span id="user-plan-label">未設定</span>
           </p>
         </div>
 
+        <!-- プラン選択（カード式） -->
         <div class="input-wrap" style="margin-top: 18px">
-          <h3 style="font-size: 15px; margin-bottom: 8px">
-            Stripeで決済する
-          </h3>
+          <h3 style="font-size: 15px; margin-bottom: 8px">プランを選択</h3>
           <p class="muted">
-            下のボタンを押すと、選択中プランのStripe決済ページへ移動します。<br />
-            決済完了後は、管理側で入金確認を行い、本会員権限を付与します。
+            登録後でも、ここからいつでもプランを変更できます。<br />
+            決済は、選択したプランに応じてStripeの画面に移動します。
           </p>
 
-          <div class="btn-col" style="margin-top: 14px">
+          <div class="plan-cards" id="plan-cards">
+            <div class="plan-card" data-plan="lite">
+              <div class="plan-name">ライトプラン</div>
+              <div class="plan-price">例）月額 1,280円</div>
+              <ul class="plan-features">
+                <li>予想閲覧の基本機能</li>
+                <li>まずはお試しで使いたい方向け</li>
+              </ul>
+            </div>
+
+            <div class="plan-card" data-plan="standard">
+              <div class="plan-name">スタンダードプラン</div>
+              <div class="plan-price">価格は後で設定</div>
+              <ul class="plan-features">
+                <li>ライトよりも情報量アップ</li>
+                <li>通常利用におすすめ</li>
+              </ul>
+            </div>
+
+            <div class="plan-card" data-plan="premium">
+              <div class="plan-name">プレミアムプラン</div>
+              <div class="plan-price">価格は後で設定</div>
+              <ul class="plan-features">
+                <li>すべての機能をフル解放</li>
+                <li>本気で勝ちにいきたい方向け</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="btn-col" style="margin-top: 16px">
+            <button type="button" class="btn-full" id="save-plan-button">
+              このプランを保存する
+            </button>
             <button type="button" class="primary btn-full" id="pay-button">
               このプランで決済へ進む
-            </button>
-
-            <button
-              type="button"
-              class="btn-full"
-              id="logout-button"
-            >
-              ログアウト
             </button>
           </div>
 
           <p id="members-msg" class="muted" style="margin-top: 10px"></p>
+        </div>
+
+        <!-- ログアウト -->
+        <div class="input-wrap" style="margin-top: 18px">
+          <div class="btn-col">
+            <button type="button" class="btn-full" id="logout-button">
+              ログアウト
+            </button>
+          </div>
         </div>
       </section>
 
@@ -73,20 +102,22 @@
     </main>
 
     <script>
-      let currentPlan = null;
-
       const PLAN_LABELS = {
-        lite: "ライトプラン（例：月1,280円）",
+        lite: "ライトプラン",
         standard: "スタンダードプラン",
         premium: "プレミアムプラン",
       };
+
+      let currentPlan = null;
+      let userMeta = {};
 
       document.addEventListener("DOMContentLoaded", async () => {
         const msgEl = document.getElementById("members-msg");
         const welcomeEl = document.getElementById("welcome-text");
         const emailEl = document.getElementById("user-email");
-        const planEl = document.getElementById("user-plan");
-        const paymentEl = document.getElementById("user-payment");
+        const planLabelEl = document.getElementById("user-plan-label");
+        const planCards = document.querySelectorAll(".plan-card");
+        const savePlanBtn = document.getElementById("save-plan-button");
         const payBtn = document.getElementById("pay-button");
         const logoutBtn = document.getElementById("logout-button");
 
@@ -98,7 +129,7 @@
           return;
         }
 
-        // ユーザー情報を取得
+        // ログインユーザー情報取得
         const {
           data: { user },
           error,
@@ -107,29 +138,73 @@
         if (error || !user) {
           welcomeEl.textContent =
             "ログイン情報が見つかりません。ログインし直してください。";
-          msgEl.textContent = "";
           setTimeout(() => {
             location.href = "index.html";
           }, 1500);
           return;
         }
 
-        // メールアドレス
+        userMeta = user.user_metadata || {};
         emailEl.textContent = user.email || "-";
 
-        // signup時に入れた user_metadata を読む
-        const meta = user.user_metadata || {};
-        currentPlan = meta.plan || "lite";
-        const paymentMethod = meta.payment_method || "card";
+        currentPlan = userMeta.plan || "lite";
+        planLabelEl.textContent =
+          PLAN_LABELS[currentPlan] || "未設定（ライト扱い）";
 
-        // 表示用に変換
-        planEl.textContent = PLAN_LABELS[currentPlan] || currentPlan;
-        paymentEl.textContent =
-          paymentMethod === "card"
-            ? "クレジットカード（Stripe）"
-            : paymentMethod;
+        welcomeEl.textContent = "ようこそ、" + (userMeta.name || "会員") + " さん";
 
-        welcomeEl.textContent = "ようこそ、" + (meta.name || "会員") + " さん";
+        // プランカードの見た目更新
+        function updateSelectedCard(plan) {
+          planCards.forEach((card) => {
+            if (card.dataset.plan === plan) {
+              card.classList.add("selected");
+            } else {
+              card.classList.remove("selected");
+            }
+          });
+          planLabelEl.textContent = PLAN_LABELS[plan] || plan;
+        }
+
+        updateSelectedCard(currentPlan);
+
+        // カードクリックでプラン変更
+        planCards.forEach((card) => {
+          card.addEventListener("click", () => {
+            const plan = card.dataset.plan;
+            currentPlan = plan;
+            updateSelectedCard(plan);
+          });
+        });
+
+        // プラン保存ボタン
+        savePlanBtn.addEventListener("click", async () => {
+          msgEl.classList.remove("err");
+          msgEl.textContent = "";
+
+          if (!currentPlan) {
+            msgEl.textContent = "プランが選択されていません。";
+            msgEl.classList.add("err");
+            return;
+          }
+
+          const newMeta = Object.assign({}, userMeta, { plan: currentPlan });
+
+          msgEl.textContent = "プランを保存しています...";
+
+          const { data, error } =
+            await window.supabaseClient.auth.updateUser({
+              data: newMeta,
+            });
+
+          if (error) {
+            msgEl.textContent = "保存エラー： " + error.message;
+            msgEl.classList.add("err");
+            return;
+          }
+
+          userMeta = newMeta;
+          msgEl.textContent = "プランを保存しました。";
+        });
 
         // 決済ボタン
         payBtn.addEventListener("click", () => {
@@ -137,7 +212,7 @@
           msgEl.textContent = "";
 
           if (!currentPlan) {
-            msgEl.textContent = "プラン情報が取得できていません。";
+            msgEl.textContent = "プランが選択されていません。";
             msgEl.classList.add("err");
             return;
           }
@@ -157,7 +232,7 @@
             return;
           }
 
-          // Stripeの決済ページへ移動
+          // Stripe 決済画面へ遷移
           window.location.href = url;
         });
 
