@@ -12,57 +12,44 @@
   </head>
 
   <body>
-    <!-- 上の黒いバー（ロゴ＋会員専用ログイン） -->
-    <header class="bar">
-      <div class="bar-left">
-        <div class="brand-main">
-          <span>AI</span> BOATRACE MEMBERS
-        </div>
-        <div class="brand-sub">BOATRACE PREMIUM AI PREDICTION</div>
-      </div>
-      <div class="bar-right">会員専用ログイン</div>
-    </header>
+    <div class="page-header">
+      <div class="page-title"><span>ボート予想</span> 会員サイト</div>
+    </div>
 
-    <!-- 中央のログインカード -->
     <main class="page">
       <section class="card">
         <h1 class="title-center">ログイン</h1>
-        <p class="muted">
-          登録したメールアドレスとパスワードを入力してください。
-        </p>
+        <p class="muted">登録したメールアドレスとパスワードを入力してください。</p>
 
-        <!-- 入力欄（中央寄せ＆横幅少し細め） -->
-        <div class="input-wrap">
-          <label for="email">メールアドレス</label>
-          <input
-            id="email"
-            type="email"
-            placeholder="you@example.com"
-            autocomplete="email"
-          />
+        <label for="email">メールアドレス</label>
+        <input
+          id="email"
+          type="email"
+          placeholder="you@example.com"
+          autocomplete="email"
+        />
 
-          <label for="password">パスワード</label>
-          <input
-            id="password"
-            type="password"
-            placeholder="8文字以上"
-            autocomplete="current-password"
-          />
-        </div>
+        <label for="password">パスワード</label>
+        <input
+          id="password"
+          type="password"
+          placeholder="8文字以上"
+          autocomplete="current-password"
+        />
 
-        <!-- ボタン（縦並び） -->
-        <div class="btn-col">
+        <!-- ← ボタン縦並び -->
+        <div class="col">
           <button id="signup-btn" class="btn-full">新規登録</button>
           <button id="login-btn" class="primary btn-full">ログイン</button>
         </div>
 
-        <p id="msg" class="muted">
-          ログインに成功すると、自動的に会員ページへ移動します。
-        </p>
+        <div id="msg" class="muted">
+          ログイン後、自動的に会員ページへ移動します。
+        </div>
 
         <p class="muted">
           手動で開く場合：<br />
-          <a href="members.html" class="link">会員ページはこちら</a>
+          <a href="members.html" class="link">会員ページへ</a>
         </p>
       </section>
 
