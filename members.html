@@ -37,6 +37,14 @@
             <strong>現在のプラン：</strong>
             <span id="user-plan-label">未設定</span>
           </p>
+          <p>
+            <strong>有効期限：</strong>
+            <span id="user-access-until">未設定</span>
+          </p>
+          <p>
+            <strong>会員ステータス：</strong>
+            <span id="user-status">無料会員（有効期限なし）</span>
+          </p>
         </div>
 
         <!-- プラン選択（カード式） -->
@@ -111,11 +119,49 @@
       let currentPlan = null;
       let userMeta = {};
 
+      // 有効期限を表示用テキストとステータスに変換
+      function buildAccessInfo(accessUntilRaw) {
+        if (!accessUntilRaw) {
+          return {
+            accessText: "未設定",
+            statusText: "無料会員（有効期限なし）",
+          };
+        }
+
+        const d = new Date(accessUntilRaw);
+        if (isNaN(d.getTime())) {
+          return {
+            accessText: "不正な日付（管理者に確認してください）",
+            statusText: "状態不明",
+          };
+        }
+
+        // 表示用（日付＋時刻、日本時間）
+        const accessText = d.toLocaleString("ja-JP", {
+          timeZone: "Asia/Tokyo",
+        });
+
+        const now = new Date();
+        if (d.getTime() >= now.getTime()) {
+          return {
+            accessText,
+            statusText: "有効（有料会員）",
+          };
+        } else {
+          return {
+            accessText,
+            statusText: "期限切れ（再決済が必要です）",
+          };
+        }
+      }
+
       document.addEventListener("DOMContentLoaded", async () => {
         const msgEl = document.getElementById("members-msg");
         const welcomeEl = document.getElementById("welcome-text");
         const emailEl = document.getElementById("user-email");
         const planLabelEl = document.getElementById("user-plan-label");
+        const accessEl = document.getElementById("user-access-until");
+        const statusEl = document.getElementById("user-status");
         const planCards = document.querySelectorAll(".plan-card");
         const savePlanBtn = document.getElementById("save-plan-button");
         const payBtn = document.getElementById("pay-button");
@@ -147,9 +193,15 @@
         userMeta = user.user_metadata || {};
         emailEl.textContent = user.email || "-";
 
+        // プラン
         currentPlan = userMeta.plan || "lite";
         planLabelEl.textContent =
           PLAN_LABELS[currentPlan] || "未設定（ライト扱い）";
+
+        // 有効期限＋ステータス
+        const accessInfo = buildAccessInfo(userMeta.access_until);
+        accessEl.textContent = accessInfo.accessText;
+        statusEl.textContent = accessInfo.statusText;
 
         welcomeEl.textContent = "ようこそ、" + (userMeta.name || "会員") + " さん";
 
@@ -176,7 +228,7 @@
           });
         });
 
-        // プラン保存ボタン
+        // プラン保存ボタン（将来の拡張用に残す）
         savePlanBtn.addEventListener("click", async () => {
           msgEl.classList.remove("err");
           msgEl.textContent = "";
@@ -187,6 +239,7 @@
             return;
           }
 
+          // access_until など既存のメタ情報は維持したまま plan だけ更新
           const newMeta = Object.assign({}, userMeta, { plan: currentPlan });
 
           msgEl.textContent = "プランを保存しています...";
