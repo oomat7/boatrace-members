@@ -6,13 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" href="styles.css" />
 
-    <!-- Supabase本体 & 設定（config.jsで supabaseClient を作っている前提） -->
     <script src="https://unpkg.com/@supabase/supabase-js@2" defer></script>
     <script src="config.js" defer></script>
   </head>
 
   <body>
-    <!-- 上のバー：ログインページと同じ見た目に合わせる -->
+    <!-- 上のバー -->
     <header class="bar">
       <div class="bar-left">
         <div class="brand-main">
@@ -27,11 +26,11 @@
       <section class="card">
         <h1 class="title-center">新規会員登録</h1>
         <p class="muted">
-          ログインに使用するメールアドレスとパスワード、会員情報を入力してください。
+          ログインに使用する情報と、プラン・支払い方法を選択してください。
         </p>
 
         <form id="signup-form" class="input-wrap">
-          <!-- ログイン情報 -->
+          <!-- ログインに使う情報 -->
           <label for="email">メールアドレス</label>
           <input
             id="email"
@@ -51,21 +50,51 @@
             required
           />
 
-          <!-- 会員情報（ユーザー側に見える名前） -->
+          <!-- 表示名 -->
           <label for="name">お名前（ニックネーム可）</label>
           <input
             id="name"
             type="text"
-            placeholder="例）タロウ"
+            placeholder="例）モグオ"
             required
           />
 
-          <!-- 任意の情報は required付けない -->
-          <label for="note">メモ（任意）</label>
+          <!-- プラン選択 -->
+          <label>プランの選択</label>
+          <div class="plan-group">
+            <label class="plan-item">
+              <input type="radio" name="plan" value="lite" checked />
+              <span>ライトプラン（例：月1,280円）</span>
+            </label>
+            <label class="plan-item">
+              <input type="radio" name="plan" value="standard" />
+              <span>スタンダードプラン</span>
+            </label>
+            <label class="plan-item">
+              <input type="radio" name="plan" value="premium" />
+              <span>プレミアムプラン</span>
+            </label>
+          </div>
+
+          <!-- 支払い方法 -->
+          <label>支払い方法</label>
+          <div class="plan-group">
+            <label class="plan-item">
+              <input type="radio" name="payment" value="card" checked />
+              <span>クレジットカード（Stripe想定）</span>
+            </label>
+            <label class="plan-item disabled">
+              <input type="radio" name="payment" value="bank" disabled />
+              <span>銀行振込（準備中）</span>
+            </label>
+          </div>
+
+          <!-- 任意のメモ -->
+          <label for="note">備考（任意）</label>
           <input
             id="note"
             type="text"
-            placeholder="管理用メモなど（任意）"
+            placeholder="紹介者・メモなど（任意）"
           />
 
           <div class="btn-col" style="margin-top: 22px">
@@ -89,9 +118,6 @@
     </main>
 
     <script>
-      // config.js で
-      //   const supabaseClient = supabase.createClient(....)
-      // としている前提で書いています
       document.addEventListener("DOMContentLoaded", () => {
         const form = document.getElementById("signup-form");
         const msgEl = document.getElementById("signup-msg");
@@ -104,23 +130,40 @@
           const name = document.getElementById("name").value.trim();
           const note = document.getElementById("note").value.trim();
 
+          const planRadio = document.querySelector(
+            'input[name="plan"]:checked'
+          );
+          const paymentRadio = document.querySelector(
+            'input[name="payment"]:checked'
+          );
+
+          const plan = planRadio ? planRadio.value : "lite";
+          const payment = paymentRadio ? paymentRadio.value : "card";
+
           if (!window.supabaseClient) {
             msgEl.textContent =
               "Supabaseの設定（config.js）が見つかりません。URLとキーを確認してください。";
+            msgEl.classList.add("err");
             return;
           }
 
           msgEl.textContent = "登録処理中です...";
           msgEl.classList.remove("err");
 
+          const redirectUrl =
+            "https://oomat7.github.io/boatrace-members/signup-complete.html";
+
           const { data, error } = await window.supabaseClient.auth.signUp({
             email,
             password,
             options: {
+              emailRedirectTo: redirectUrl,
               data: {
                 name,
                 note,
-              }, // ユーザーのメタデータとして保存される
+                plan,
+                payment_method: payment,
+              },
             },
           });
 
@@ -130,12 +173,8 @@
             return;
           }
 
-          // メール確認を使っている場合は「確認メールを送信しました」的なメッセージ
           msgEl.textContent =
-            "登録が完了しました。ログインページへ移動します...";
-          setTimeout(() => {
-            location.href = "index.html";
-          }, 1500);
+            "確認メールを送信しました。メール内のURLをクリックして登録を完了してください。";
         });
       });
     </script>
