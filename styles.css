@@ -3,7 +3,7 @@
     sans-serif;
 }
 
-/* 背景 */
+/* 全体背景 */
 body {
   margin: 0;
   min-height: 100vh;
@@ -11,97 +11,59 @@ body {
   color: #f9fafb;
 }
 
-/* 上の黒バー */
-.bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 14px 20px;
-  background: rgba(10, 10, 16, 0.96);
-  border-bottom: 1px solid rgba(148, 163, 184, 0.35);
+/* ページタイトル（中央・大きく・強調） */
+.page-header {
+  text-align: center;
+  padding: 26px 12px 10px;
 }
 
-.bar-left {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+.page-title {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
 }
 
-.brand-main {
-  font-size: 18px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+.page-title span {
+  color: #fbbf24; /* ゴールド */
 }
 
-.brand-main span {
-  color: #fbbf24;
-}
-
-.brand-sub {
-  font-size: 11px;
-  color: #9ca3af;
-  letter-spacing: 0.12em;
-}
-
-.bar-right {
-  font-size: 12px;
-  color: #d1d5db;
-}
-
-/* 全体レイアウト：中央のカード用コンテナ */
+/* カードをスリムに */
 .page {
-  max-width: 960px;
-  margin: 40px auto 40px;
-  padding: 0 16px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 0 12px 40px;
 }
 
 /* カード本体 */
 .card {
-  width: 520px;
-  max-width: 100%;
   background: radial-gradient(circle at top left, #1f2937 0%, #020617 55%);
-  border-radius: 18px;
-  padding: 26px 26px 28px;
+  border-radius: 16px;
+  padding: 26px 24px 28px;
   border: 1px solid rgba(148, 163, 184, 0.55);
   box-shadow: 0 18px 45px rgba(0, 0, 0, 0.85);
 }
 
-/* ログインのタイトル */
 .title-center {
   text-align: center;
   font-size: 22px;
   font-weight: 700;
-  margin-bottom: 8px;
-}
-
-.muted {
-  font-size: 12px;
-  color: #9ca3af;
-}
-
-/* 入力欄エリア：カード内で少し細く＆中央寄せ */
-.input-wrap {
-  max-width: 90%;
-  margin: 14px auto 0;
+  margin-bottom: 6px;
 }
 
 /* ラベル */
 label {
   display: block;
-  margin: 14px 0 6px;
-  font-size: 14px;
+  margin: 18px 0 6px;
   font-weight: 600;
+  font-size: 14px;
 }
 
-/* 入力ボックス */
+/* 入力欄 */
 input {
   width: 100%;
   padding: 11px 10px;
-  border-radius: 10px;
   border: 1px solid #4b5563;
+  border-radius: 8px;
   background: rgba(15, 23, 42, 0.9);
   color: #f9fafb;
   font-size: 13px;
@@ -111,11 +73,11 @@ input::placeholder {
   color: #6b7280;
 }
 
-/* ボタン縦並び */
-.btn-col {
+/* 縦並びのボタン */
+.col {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
   margin-top: 22px;
 }
 
@@ -123,15 +85,14 @@ input::placeholder {
   width: 100%;
 }
 
-/* ボタン共通 */
+/* ボタン */
 button {
   padding: 13px;
-  border-radius: 999px;
+  font-size: 14px;
+  border-radius: 12px;
   border: 1px solid #4b5563;
   background: rgba(15, 23, 42, 0.9);
   color: #e5e7eb;
-  font-weight: 600;
-  font-size: 14px;
   cursor: pointer;
   transition: 0.1s ease-out;
 }
@@ -147,6 +108,17 @@ button:hover {
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.85);
 }
 
+/* メッセージ */
+#msg {
+  margin-top: 12px;
+  font-size: 12px;
+  color: #e5e7eb;
+}
+
+#msg.err {
+  color: #fca5a5;
+}
+
 /* リンク */
 .link {
   color: #fbbf24;
@@ -156,23 +128,7 @@ button:hover {
 /* フッター */
 .footer {
   margin-top: 18px;
-  align-self: flex-end;
+  text-align: right;
   font-size: 11px;
   color: #6b7280;
-}
-
-/* スマホ調整 */
-@media (max-width: 600px) {
-  .page {
-    margin-top: 24px;
-  }
-
-  .card {
-    width: 100%;
-    padding: 22px 18px 24px;
-  }
-
-  .input-wrap {
-    max-width: 100%;
-  }
 }
