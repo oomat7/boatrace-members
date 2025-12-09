@@ -96,9 +96,12 @@
           <p id="members-msg" class="muted" style="margin-top: 10px"></p>
         </div>
 
-        <!-- ログアウト -->
+        <!-- 予想ページ＆ログアウト -->
         <div class="input-wrap" style="margin-top: 18px">
           <div class="btn-col">
+            <button type="button" class="primary btn-full" id="open-prediction">
+              本日の予想ページを開く
+            </button>
             <button type="button" class="btn-full" id="logout-button">
               ログアウト
             </button>
@@ -166,6 +169,7 @@
         const savePlanBtn = document.getElementById("save-plan-button");
         const payBtn = document.getElementById("pay-button");
         const logoutBtn = document.getElementById("logout-button");
+        const openPredictionBtn = document.getElementById("open-prediction");
 
         msgEl.textContent = "";
 
@@ -203,7 +207,7 @@
         accessEl.textContent = accessInfo.accessText;
         statusEl.textContent = accessInfo.statusText;
 
-        welcomeEl.textContent = "ようこそ、" + (userMeta.name || "会員") + " さん";
+        welcomeEl.textContent = "ようこそ、" + (userMeta.name || "moguo") + " さん";
 
         // プランカードの見た目更新
         function updateSelectedCard(plan) {
@@ -287,6 +291,11 @@
 
           // Stripe 決済画面へ遷移
           window.location.href = url;
+        });
+
+        // 予想ページへ
+        openPredictionBtn.addEventListener("click", () => {
+          location.href = "prediction.html";
         });
 
         // ログアウト
