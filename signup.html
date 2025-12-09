@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <title>新規会員登録 - ボート予想 会員サイト</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="styles.css" />
+
+    <!-- Supabase本体 & 設定（config.jsで supabaseClient を作っている前提） -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2" defer></script>
+    <script src="config.js" defer></script>
+  </head>
+
+  <body>
+    <!-- 上のバー：ログインページと同じ見た目に合わせる -->
+    <header class="bar">
+      <div class="bar-left">
+        <div class="brand-main">
+          <span>AI</span> BOATRACE MEMBERS
+        </div>
+        <div class="brand-sub">BOATRACE PREMIUM AI PREDICTION</div>
+      </div>
+      <div class="bar-right">新規会員登録</div>
+    </header>
+
+    <main class="page">
+      <section class="card">
+        <h1 class="title-center">新規会員登録</h1>
+        <p class="muted">
+          ログインに使用するメールアドレスとパスワード、会員情報を入力してください。
+        </p>
+
+        <form id="signup-form" class="input-wrap">
+          <!-- ログイン情報 -->
+          <label for="email">メールアドレス</label>
+          <input
+            id="email"
+            type="email"
+            placeholder="you@example.com"
+            autocomplete="email"
+            required
+          />
+
+          <label for="password">パスワード</label>
+          <input
+            id="password"
+            type="password"
+            placeholder="8文字以上"
+            autocomplete="new-password"
+            minlength="8"
+            required
+          />
+
+          <!-- 会員情報（ユーザー側に見える名前） -->
+          <label for="name">お名前（ニックネーム可）</label>
+          <input
+            id="name"
+            type="text"
+            placeholder="例）モグオ"
+            required
+          />
+
+          <!-- 任意の情報は required付けない -->
+          <label for="note">メモ（任意）</label>
+          <input
+            id="note"
+            type="text"
+            placeholder="管理用メモなど（任意）"
+          />
+
+          <div class="btn-col" style="margin-top: 22px">
+            <button
+              type="button"
+              class="btn-full"
+              onclick="location.href='index.html'"
+            >
+              ログインページへ戻る
+            </button>
+            <button type="submit" class="primary btn-full">
+              登録を完了する
+            </button>
+          </div>
+
+          <p id="signup-msg" class="muted" style="margin-top: 10px"></p>
+        </form>
+      </section>
+
+      <div class="footer">© 2025 AI BOATRACE LAB</div>
+    </main>
+
+    <script>
+      // config.js で
+      //   const supabaseClient = supabase.createClient(....)
+      // としている前提で書いています
+      document.addEventListener("DOMContentLoaded", () => {
+        const form = document.getElementById("signup-form");
+        const msgEl = document.getElementById("signup-msg");
+
+        form.addEventListener("submit", async (e) => {
+          e.preventDefault();
+
+          const email = document.getElementById("email").value.trim();
+          const password = document.getElementById("password").value.trim();
+          const name = document.getElementById("name").value.trim();
+          const note = document.getElementById("note").value.trim();
+
+          if (!window.supabaseClient) {
+            msgEl.textContent =
+              "Supabaseの設定（config.js）が見つかりません。URLとキーを確認してください。";
+            return;
+          }
+
+          msgEl.textContent = "登録処理中です...";
+          msgEl.classList.remove("err");
+
+          const { data, error } = await window.supabaseClient.auth.signUp({
+            email,
+            password,
+            options: {
+              data: {
+                name,
+                note,
+              }, // ユーザーのメタデータとして保存される
+            },
+          });
+
+          if (error) {
+            msgEl.textContent = "エラー： " + error.message;
+            msgEl.classList.add("err");
+            return;
+          }
+
+          // メール確認を使っている場合は「確認メールを送信しました」的なメッセージ
+          msgEl.textContent =
+            "登録が完了しました。ログインページへ移動します...";
+          setTimeout(() => {
+            location.href = "index.html";
+          }, 1500);
+        });
+      });
+    </script>
+  </body>
+</html>
