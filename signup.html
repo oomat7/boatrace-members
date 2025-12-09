@@ -68,12 +68,22 @@
               <span>パスワードの強度</span>
               <span id="pw-strength-label">0%</span>
             </div>
-            <div id="pw-strength-bar-inner"class="password-strength-bar-inner"></div>
+
+            <!-- ★ここに親のバー枠を追加★ -->
+            <div class="password-strength-bar">
+              <div
+                id="pw-strength-bar-inner"
+                class="password-strength-bar-inner"
+              ></div>
             </div>
+
             <ul class="password-rules">
               <li>8〜12文字以内</li>
               <li>英数字（大文字・小文字・数字）をすべて含む</li>
-              <li>使用できる記号：<code>! @ # $ % ^ &amp; * ( ) _ - +</code></li>
+              <li>
+                使用できる記号：
+                <code>! @ # $ % ^ &amp; * ( ) _ - +</code>
+              </li>
             </ul>
           </div>
 
@@ -145,9 +155,8 @@
     </main>
 
     <script>
-      // パスワードのチェック関数
+      // パスワードチェック
       function validatePassword(pw) {
-        // 8〜12文字 / 必須: 小文字・大文字・数字
         const pattern =
           /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d!@#$%^&*()_\-+]{8,12}$/;
         return pattern.test(pw);
@@ -160,7 +169,7 @@
         if (/[A-Z]/.test(pw)) score++;
         if (/\d/.test(pw)) score++;
         if (/[!@#$%^&*()_\-+]/.test(pw)) score++;
-        return Math.round((score / 5) * 100); // 0〜100%
+        return Math.round((score / 5) * 100);
       }
 
       document.addEventListener("DOMContentLoaded", () => {
@@ -171,7 +180,7 @@
         const barInner = document.getElementById("pw-strength-bar-inner");
         const label = document.getElementById("pw-strength-label");
 
-        // 入力中に強度を更新
+        // 強度バー更新
         pwInput.addEventListener("input", () => {
           const pw = pwInput.value;
           const percent = calcStrength(pw);
@@ -196,7 +205,6 @@
           const passwordConfirm = pwConfirmInput.value.trim();
           const name = document.getElementById("name").value.trim();
           const note = document.getElementById("note").value.trim();
-
           const planRadio = document.querySelector(
             'input[name="plan"]:checked'
           );
@@ -210,7 +218,8 @@
           msgEl.textContent = "";
 
           if (password !== passwordConfirm) {
-            msgEl.textContent = "パスワードと確認用パスワードが一致しません。";
+            msgEl.textContent =
+              "パスワードと確認用パスワードが一致しません。";
             msgEl.classList.add("err");
             return;
           }
@@ -230,6 +239,7 @@
           }
 
           msgEl.textContent = "登録処理中です...";
+
           const redirectUrl =
             "https://oomat7.github.io/boatrace-members/signup-complete.html";
 
