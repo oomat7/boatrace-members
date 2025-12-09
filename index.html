@@ -6,37 +6,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" href="styles.css" />
 
-    <!-- Supabase -->
     <script src="https://unpkg.com/@supabase/supabase-js@2" defer></script>
     <script src="config.js" defer></script>
   </head>
 
   <body>
-    <div class="page-header">
-      <div class="page-title"><span>ボート予想</span> 会員サイト</div>
+    <!-- 上部バー -->
+    <div class="bar">
+      <div></div>
+      <div class="bar-right">会員専用ログイン</div>
     </div>
 
-    <main class="page">
-      <section class="card">
-        <h1 class="title-center">ログイン</h1>
-        <p class="muted">登録したメールアドレスとパスワードを入力してください。</p>
-
-        <label for="email">メールアドレス</label>
-        <input
-          id="email"
-          type="email"
-          placeholder="you@example.com"
-          autocomplete="email"
-        />
-
-        <label for="password">パスワード</label>
-        <input
-          id="password"
-          type="password"
-          placeholder="8文字以上"
-          autocomplete="current-password"
-        />
-
-        <!-- ← ボタン縦並び -->
-        <div class="col">
-          <button id="signup-btn" class="btn-f
+    <!-- 画面中央タイトル -->
+    <div class="site-title-box">
+      <div class="site-title-main">AI BOATRACE MEMBERS</div>
+      <div class="site-title-sub">BOATRACE PREMIUM AI PREDICTION</div>
+    </div>
