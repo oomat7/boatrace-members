@@ -1,146 +1,172 @@
 <!doctype html>
 <html lang="ja">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>会員ページ | ボート予想</title>
-  <link rel="stylesheet" href="styles.css" />
-</head>
-<body>
-  <header class="bar">
-    <strong>会員ページ</strong>
-    <nav>
-      <a href="index.html" id="logout">ログアウト</a>
-    </nav>
-  </header>
+  <head>
+    <meta charset="utf-8" />
+    <title>会員ページ - ボート予想 会員サイト</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="styles.css" />
 
-  <main class="card">
-    <h2>本日の予想</h2>
-    <div id="list">読み込み中…</div>
-  </main>
+    <script src="https://unpkg.com/@supabase/supabase-js@2" defer></script>
+    <script src="config.js" defer></script>
+  </head>
 
-  <!-- 1) Supabase 本体 -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <body>
+    <!-- 上のバー -->
+    <header class="bar">
+      <div class="bar-left">
+        <div class="brand-main">
+          <span>AI</span> BOATRACE MEMBERS
+        </div>
+        <div class="brand-sub">BOATRACE PREMIUM AI PREDICTION</div>
+      </div>
+      <div class="bar-right">会員ページ</div>
+    </header>
 
-  <!-- 2) 接続設定（ANON KEY が入っている config.js） -->
-  <script src="config.js"></script>
+    <main class="page">
+      <section class="card">
+        <h1 class="title-center">会員ページ</h1>
+        <p class="muted" id="welcome-text">ログイン情報を取得中です...</p>
 
-  <!-- 3) 会員ページの処理 -->
-  <script>
-    // 今日の日付（YYYY-MM-DD）を返す
-    function todayStr() {
-      return new Date().toISOString().slice(0, 10);
-    }
+        <div class="input-wrap" style="margin-top: 18px">
+          <p>
+            <strong>登録メールアドレス：</strong>
+            <span id="user-email">-</span>
+          </p>
+          <p>
+            <strong>選択プラン：</strong>
+            <span id="user-plan">-</span>
+          </p>
+          <p>
+            <strong>支払い方法：</strong>
+            <span id="user-payment">-</span>
+          </p>
+        </div>
 
-    // ログインチェック（セッションがなければログイン画面へ戻す）
-    async function requireSession() {
-      const { data: { session } } = await supabaseClient.auth.getSession();
-      if (!session) {
-        location.href = 'index.html';
-      }
-      return session;
-    }
+        <div class="input-wrap" style="margin-top: 18px">
+          <h3 style="font-size: 15px; margin-bottom: 8px">
+            Stripeで決済する
+          </h3>
+          <p class="muted">
+            下のボタンを押すと、選択中プランのStripe決済ページへ移動します。<br />
+            決済完了後は、管理側で入金確認を行い、本会員権限を付与します。
+          </p>
 
-    // 画面への描画処理
-    function render(items) {
-      const root = document.getElementById('list');
+          <div class="btn-col" style="margin-top: 14px">
+            <button type="button" class="primary btn-full" id="pay-button">
+              このプランで決済へ進む
+            </button>
 
-      if (!items || items.length === 0) {
-        root.textContent = 'まだ予想がありません。';
-        return;
-      }
+            <button
+              type="button"
+              class="btn-full"
+              id="logout-button"
+            >
+              ログアウト
+            </button>
+          </div>
 
-      // stadium ごとにグループ化
-      const byStadium = {};
-      for (const p of items) {
-        const key = p.stadium || '場不明';
-        if (!byStadium[key]) byStadium[key] = [];
-        byStadium[key].push(p);
-      }
+          <p id="members-msg" class="muted" style="margin-top: 10px"></p>
+        </div>
+      </section>
 
-      // 場名順にソート
-      const stadiumNames = Object.keys(byStadium).sort((a, b) =>
-        a.localeCompare(b, 'ja')
-      );
+      <div class="footer">© 2025 AI BOATRACE LAB</div>
+    </main>
 
-      const html = stadiumNames.map((stadium) => {
-        // この場のレースを 1R→12R の順にソート
-        const races = byStadium[stadium].sort(
-          (a, b) => (a.race_no || 0) - (b.race_no || 0)
-        );
+    <script>
+      let currentPlan = null;
 
-        // 各レースはカード表示のみ（レース単位では折り畳まない）
-        const raceHtml = races.map((p) => `
-          <article class="pred">
-            <header class="pred-header">
-              <div>
-                <b>${p.race_no}R</b>
-                ${p.tier ? `<span class="tier">（${p.tier}）</span>` : ''}
-              </div>
-              <div class="meta">
-                <small>${p.race_date}${p.version ? ` v${p.version}` : ''}</small>
-                ${p.deadline ? `<small>締切 ${p.deadline}</small>` : ''}
-              </div>
-            </header>
-            <div class="picks"><b>${p.picks || ''}</b></div>
-            ${
-              p.notes
-                ? `<div class="notes">${String(p.notes).replace(/\n/g, '<br>')}</div>`
-                : ''
-            }
-          </article>
-        `).join('');
+      const PLAN_LABELS = {
+        lite: "ライトプラン（例：月1,280円）",
+        standard: "スタンダードプラン",
+        premium: "プレミアムプラン",
+      };
 
-        // ✅ 競艇場ごとにだけ折り畳み
-        return `
-          <details class="stadium-block" open>
-            <summary class="stadium-title">${stadium}</summary>
-            ${raceHtml}
-          </details>
-        `;
-      }).join('');
+      document.addEventListener("DOMContentLoaded", async () => {
+        const msgEl = document.getElementById("members-msg");
+        const welcomeEl = document.getElementById("welcome-text");
+        const emailEl = document.getElementById("user-email");
+        const planEl = document.getElementById("user-plan");
+        const paymentEl = document.getElementById("user-payment");
+        const payBtn = document.getElementById("pay-button");
+        const logoutBtn = document.getElementById("logout-button");
 
-      root.innerHTML = html;
-    }
+        msgEl.textContent = "";
 
-    // Supabase から当日分を取得して描画
-    async function fetchAndRender() {
-      try {
-        await requireSession();
-        const today = todayStr();
-
-        const { data, error } = await supabaseClient
-          .from('predictions')
-          .select('*')
-          .eq('race_date', today)
-          .order('stadium', { ascending: true }) // 場ごと
-          .order('race_no', { ascending: true }); // 1R→12R 順
-
-        if (error) {
-          console.error(error);
-          document.getElementById('list').textContent =
-            '取得エラー：' + error.message;
+        if (!window.supabaseClient) {
+          welcomeEl.textContent =
+            "Supabaseの設定（config.js）が見つかりません。";
           return;
         }
 
-        render(data || []);
-      } catch (e) {
-        console.error(e);
-        document.getElementById('list').textContent =
-          '取得エラー：' + e.message;
-      }
-    }
+        // ユーザー情報を取得
+        const {
+          data: { user },
+          error,
+        } = await window.supabaseClient.auth.getUser();
 
-    // ログアウトボタン
-    document.getElementById('logout').onclick = async (e) => {
-      e.preventDefault();
-      await supabaseClient.auth.signOut();
-      location.href = 'index.html';
-    };
+        if (error || !user) {
+          welcomeEl.textContent =
+            "ログイン情報が見つかりません。ログインし直してください。";
+          msgEl.textContent = "";
+          setTimeout(() => {
+            location.href = "index.html";
+          }, 1500);
+          return;
+        }
 
-    // 初回表示 ＋ 1分ごとに自動更新
-    fetchAndRender();
-    setInterval(fetchAndRender, 60 * 1000);
-  </script>
-</body>
+        // メールアドレス
+        emailEl.textContent = user.email || "-";
+
+        // signup時に入れた user_metadata を読む
+        const meta = user.user_metadata || {};
+        currentPlan = meta.plan || "lite";
+        const paymentMethod = meta.payment_method || "card";
+
+        // 表示用に変換
+        planEl.textContent = PLAN_LABELS[currentPlan] || currentPlan;
+        paymentEl.textContent =
+          paymentMethod === "card"
+            ? "クレジットカード（Stripe）"
+            : paymentMethod;
+
+        welcomeEl.textContent = "ようこそ、" + (meta.name || "会員") + " さん";
+
+        // 決済ボタン
+        payBtn.addEventListener("click", () => {
+          msgEl.classList.remove("err");
+          msgEl.textContent = "";
+
+          if (!currentPlan) {
+            msgEl.textContent = "プラン情報が取得できていません。";
+            msgEl.classList.add("err");
+            return;
+          }
+
+          if (!window.planPaymentLinks) {
+            msgEl.textContent =
+              "Stripeの決済リンクが設定されていません（config.js）。";
+            msgEl.classList.add("err");
+            return;
+          }
+
+          const url = window.planPaymentLinks[currentPlan];
+          if (!url) {
+            msgEl.textContent =
+              "このプラン用の決済リンクが見つかりません。管理者にお問い合わせください。";
+            msgEl.classList.add("err");
+            return;
+          }
+
+          // Stripeの決済ページへ移動
+          window.location.href = url;
+        });
+
+        // ログアウト
+        logoutBtn.addEventListener("click", async () => {
+          await window.supabaseClient.auth.signOut();
+          location.href = "index.html";
+        });
+      });
+    </script>
+  </body>
 </html>
