@@ -23,4 +23,223 @@
 
     <main class="page">
       <section class="card">
-        <h1 clas
+        <h1 class="title-center">本日のAIボート予想</h1>
+        <p class="muted" id="status-text">会員ステータスを確認中です...</p>
+
+        <!-- ✅ 有料OKのときだけ表示 -->
+        <div id="prediction-content" style="display:none; margin-top: 14px">
+          <!-- フィルター -->
+          <div class="input-wrap">
+            <label for="date-select">日付</label>
+            <select id="date-select"></select>
+
+            <label for="stadium-select" style="margin-top: 10px">競艇場</label>
+            <select id="stadium-select"></select>
+
+            <p class="muted" style="margin-top: 10px">
+              ※ 予想データは <code>data/predictions.json</code> から表示しています。
+            </p>
+          </div>
+
+          <!-- 予想の表示エリア -->
+          <div id="predictions-area" class="input-wrap" style="margin-top: 14px">
+            <p class="muted">読み込み中...</p>
+          </div>
+
+          <!-- ボタン -->
+          <div class="btn-col" style="margin-top: 16px">
+            <button type="button" class="btn-full" onclick="location.href='members.html'">
+              会員ページへ戻る
+            </button>
+            <button type="button" class="btn-full" id="logout-button">
+              ログアウト
+            </button>
+          </div>
+        </div>
+
+        <!-- ❌ ブロック時に表示 -->
+        <div id="blocked-content" class="input-wrap" style="display:none; margin-top: 16px">
+          <p>
+            このページは <strong>有料会員専用</strong> です。
+          </p>
+          <p class="muted" id="blocked-reason" style="margin-top: 6px"></p>
+
+          <div class="btn-col" style="margin-top: 14px">
+            <button type="button" class="primary btn-full" onclick="location.href='members.html'">
+              会員ページへ戻る（決済はこちら）
+            </button>
+            <button type="button" class="btn-full" onclick="location.href='index.html'">
+              ログインページへ
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <div class="footer">© 2025 AI BOATRACE LAB</div>
+    </main>
+
+    <script>
+      // ✅ 本番では true（access_until が無いユーザーは閲覧NG）
+      const REQUIRE_PAID_MEMBER = true;
+
+      function formatJST(iso) {
+        try {
+          const d = new Date(iso);
+          if (isNaN(d.getTime())) return "不正な日付";
+          return d.toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" });
+        } catch {
+          return "不正な日付";
+        }
+      }
+
+      function buildAccessInfo(accessUntilRaw) {
+        if (!accessUntilRaw) {
+          return {
+            active: !REQUIRE_PAID_MEMBER,
+            accessText: "未設定",
+            statusText: "無料会員（有効期限なし）",
+          };
+        }
+
+        const d = new Date(accessUntilRaw);
+        if (isNaN(d.getTime())) {
+          return {
+            active: false,
+            accessText: "不正な日付",
+            statusText: "状態不明（管理者に確認）",
+          };
+        }
+
+        const now = new Date();
+        const accessText = formatJST(accessUntilRaw);
+
+        if (d.getTime() >= now.getTime()) {
+          return { active: true, accessText, statusText: "有効（有料会員）" };
+        } else {
+          return { active: false, accessText, statusText: "期限切れ（再決済が必要）" };
+        }
+      }
+
+      function unique(arr) {
+        return Array.from(new Set(arr));
+      }
+
+      function sortRaceNo(a, b) {
+        return (a.race_no || 0) - (b.race_no || 0);
+      }
+
+      function escapeHTML(s) {
+        return String(s || "")
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#039;");
+      }
+
+      function renderPredictions(list) {
+        const area = document.getElementById("predictions-area");
+        if (!list || list.length === 0) {
+          area.innerHTML = `<p class="muted">該当する予想がありません。</p>`;
+          return;
+        }
+
+        list.sort(sortRaceNo);
+
+        area.innerHTML = list.map((row) => `
+          <div style="padding:14px; border:1px solid rgba(148,163,184,.35); border-radius:14px; margin-top:12px">
+            <div style="display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap">
+              <div><strong>${escapeHTML(row.race_no)}R</strong> <span class="muted">${escapeHTML(row.tier)}</span></div>
+              <div class="muted">${escapeHTML(row.deadline ? "締切: " + row.deadline : "")}</div>
+            </div>
+
+            <div style="margin-top:10px">
+              <div class="muted">買い目</div>
+              <div style="font-weight:700; margin-top:4px">${escapeHTML(row.picks)}</div>
+            </div>
+
+            <div style="margin-top:10px">
+              <div class="muted">コメント</div>
+              <div style="white-space:pre-wrap; margin-top:4px">${escapeHTML(row.notes)}</div>
+            </div>
+          </div>
+        `).join("");
+      }
+
+      document.addEventListener("DOMContentLoaded", async () => {
+        const statusText = document.getElementById("status-text");
+        const predictionContent = document.getElementById("prediction-content");
+        const blockedContent = document.getElementById("blocked-content");
+        const blockedReason = document.getElementById("blocked-reason");
+        const logoutBtn = document.getElementById("logout-button");
+
+        const dateSelect = document.getElementById("date-select");
+        const stadiumSelect = document.getElementById("stadium-select");
+
+        if (!window.supabaseClient) {
+          statusText.textContent = "Supabaseの設定（config.js）が見つかりません。";
+          blockedContent.style.display = "block";
+          blockedReason.textContent = "config.js が読み込めていません。";
+          return;
+        }
+
+        const { data: { user } } = await window.supabaseClient.auth.getUser();
+        if (!user) {
+          statusText.textContent = "ログインが必要です。";
+          setTimeout(() => location.href = "index.html", 900);
+          return;
+        }
+
+        const accessInfo = buildAccessInfo(user.user_metadata?.access_until);
+        statusText.textContent =
+          `会員ステータス：${accessInfo.statusText}（有効期限：${accessInfo.accessText}）`;
+
+        if (!accessInfo.active) {
+          blockedContent.style.display = "block";
+          blockedReason.textContent = "有料会員ではありません / 期限切れです。会員ページで決済してください。";
+
+          // ★ ここが追加ポイント
+          setTimeout(() => {
+            location.href = "members.html";
+          }, 1500);
+          return;
+        }
+
+        predictionContent.style.display = "block";
+
+        const res = await fetch(`data/predictions.json?v=${Date.now()}`, { cache: "no-store" });
+        const data = await res.json();
+
+        const dates = unique(data.map(r => r.race_date)).sort().reverse();
+        dateSelect.innerHTML = dates.map(d => `<option>${d}</option>`).join("");
+        dateSelect.value = dates[0];
+
+        function stadiumsByDate(d) {
+          return unique(data.filter(r => r.race_date === d).map(r => r.stadium)).sort();
+        }
+
+        function fillStadiums(d) {
+          const list = stadiumsByDate(d);
+          stadiumSelect.innerHTML = list.map(s => `<option>${s}</option>`).join("");
+        }
+
+        function refresh() {
+          renderPredictions(
+            data.filter(r => r.race_date === dateSelect.value && r.stadium === stadiumSelect.value)
+          );
+        }
+
+        fillStadiums(dateSelect.value);
+        refresh();
+
+        dateSelect.addEventListener("change", () => { fillStadiums(dateSelect.value); refresh(); });
+        stadiumSelect.addEventListener("change", refresh);
+
+        logoutBtn.addEventListener("click", async () => {
+          await window.supabaseClient.auth.signOut();
+          location.href = "index.html";
+        });
+      });
+    </script>
+  </body>
+</html>
