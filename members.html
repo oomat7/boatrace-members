@@ -294,8 +294,18 @@
         } else {
           // 予想ページへ（有料OKの人だけ）
           openPredictionBtn.addEventListener("click", () => {
-            location.href = "prediction.html";
-          });
+  // 有料判定（members側の表示と同じ判定を使う）
+  const accessInfo = buildAccessInfo(userMeta.access_until);
+
+  if (accessInfo.statusText !== "有効（有料会員）") {
+    msgEl.classList.add("err");
+    msgEl.textContent = "予想ページは有料会員のみ閲覧できます。プランを選んで決済してください。";
+    return;
+  }
+
+  location.href = "prediction.html";
+});
+
         }
 
         // プラン保存ボタン（将来の拡張用に残す）
