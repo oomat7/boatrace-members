@@ -84,6 +84,30 @@
             </div>
           </div>
 
+          <!-- ✅ 追加：プラン内容の説明（A） -->
+          <div
+            id="plan-detail"
+            style="
+              margin-top: 12px;
+              padding: 12px 14px;
+              border-radius: 14px;
+              border: 1px solid rgba(148, 163, 184, 0.35);
+              background: radial-gradient(circle at top left, #020617 0%, #000 55%);
+              font-size: 13px;
+            "
+          >
+            <div style="font-weight: 700">このプランで見れる内容</div>
+            <ul
+              id="plan-detail-list"
+              style="margin: 8px 0 0 18px; color: rgba(226, 232, 240, 0.9)"
+            >
+              <li>読み込み中...</li>
+            </ul>
+            <p class="muted" style="margin-top: 8px">
+              ※ 予想ページの閲覧は「有効期限（access_until）」が有効な有料会員のみです。
+            </p>
+          </div>
+
           <div class="btn-col" style="margin-top: 16px">
             <button type="button" class="btn-full" id="save-plan-button">
               このプランを保存する
@@ -117,6 +141,25 @@
         lite: "ライトプラン",
         standard: "スタンダードプラン",
         premium: "プレミアムプラン",
+      };
+
+      // ✅ 追加：プランごとの「見れる内容」説明（A）
+      const PLAN_DETAILS = {
+        lite: [
+          "本日の予想（買い目・コメント）を閲覧",
+          "日付・競艇場で絞り込み",
+          "まずはお試し向け",
+        ],
+        standard: [
+          "ライトの内容すべて",
+          "情報量アップ（例：追加コメント・根拠など）※後で拡張",
+          "通常利用におすすめ",
+        ],
+        premium: [
+          "スタンダードの内容すべて",
+          "すべての機能をフル解放 ※後で拡張",
+          "本気で勝ちに行きたい方向け",
+        ],
       };
 
       let currentPlan = null;
@@ -170,6 +213,7 @@
         const payBtn = document.getElementById("pay-button");
         const logoutBtn = document.getElementById("logout-button");
         const openPredictionBtn = document.getElementById("open-prediction");
+        const planDetailListEl = document.getElementById("plan-detail-list");
 
         msgEl.textContent = "";
 
@@ -218,7 +262,12 @@
               card.classList.remove("selected");
             }
           });
+
           planLabelEl.textContent = PLAN_LABELS[plan] || plan;
+
+          // ✅ 追加：プラン説明の表示更新
+          const list = PLAN_DETAILS[plan] || [];
+          planDetailListEl.innerHTML = list.map((t) => `<li>${t}</li>`).join("");
         }
 
         updateSelectedCard(currentPlan);
@@ -231,6 +280,23 @@
             updateSelectedCard(plan);
           });
         });
+
+        // ✅ 有料でない人は「予想を開く」ボタンを決済誘導にする
+        const isActivePaid = (accessInfo.statusText || "").startsWith("有効");
+        if (!isActivePaid) {
+          openPredictionBtn.textContent = "決済して予想を見る（有料会員専用）";
+          openPredictionBtn.classList.remove("primary");
+          openPredictionBtn.classList.add("btn-full");
+          openPredictionBtn.onclick = () => {
+            const el = document.getElementById("pay-button");
+            if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+          };
+        } else {
+          // 予想ページへ（有料OKの人だけ）
+          openPredictionBtn.addEventListener("click", () => {
+            location.href = "prediction.html";
+          });
+        }
 
         // プラン保存ボタン（将来の拡張用に残す）
         savePlanBtn.addEventListener("click", async () => {
@@ -248,10 +314,9 @@
 
           msgEl.textContent = "プランを保存しています...";
 
-          const { data, error } =
-            await window.supabaseClient.auth.updateUser({
-              data: newMeta,
-            });
+          const { error } = await window.supabaseClient.auth.updateUser({
+            data: newMeta,
+          });
 
           if (error) {
             msgEl.textContent = "保存エラー： " + error.message;
@@ -291,11 +356,6 @@
 
           // Stripe 決済画面へ遷移
           window.location.href = url;
-        });
-
-        // 予想ページへ
-        openPredictionBtn.addEventListener("click", () => {
-          location.href = "prediction.html";
         });
 
         // ログアウト
