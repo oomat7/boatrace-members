@@ -12,12 +12,9 @@
 
     <!-- ✅ チラ見防止ガード（最重要） -->
     <style>
-      /* JSの判定が終わるまでページ本体を非表示 */
       html.guard body {
         visibility: hidden;
       }
-
-      /* 黒ローディング */
       #guard-loading {
         position: fixed;
         inset: 0;
@@ -35,10 +32,8 @@
     </style>
 
     <script>
-      // ページが描画される前にガードをかける（最重要）
       document.documentElement.classList.add("guard");
 
-      // ローディングを先に出す
       const loading = document.createElement("div");
       loading.id = "guard-loading";
       loading.textContent = "LOADING...";
@@ -46,7 +41,6 @@
         document.body.appendChild(loading);
       });
 
-      // 後で解除するための関数
       window.__unlockGuard = () => {
         document.documentElement.classList.remove("guard");
         const el = document.getElementById("guard-loading");
@@ -72,31 +66,20 @@
 
         <!-- ✅ 有料OKのときだけ表示 -->
         <div id="prediction-content" style="display:none; margin-top: 14px">
-          <!-- フィルター -->
           <div class="input-wrap">
             <label for="date-select">日付</label>
             <select id="date-select"></select>
 
             <label for="stadium-select" style="margin-top: 10px">競艇場</label>
             <select id="stadium-select"></select>
-
-            <p class="muted" style="margin-top: 10px">
-              ※ 予想データは <code>data/predictions.json</code> から表示しています。
-            </p>
           </div>
 
-          <!-- 予想の表示エリア -->
           <div id="predictions-area" class="input-wrap" style="margin-top: 14px">
             <p class="muted">読み込み中...</p>
           </div>
 
-          <!-- ボタン -->
           <div class="btn-col" style="margin-top: 16px">
-            <button
-              type="button"
-              class="btn-full"
-              onclick="location.href='members.html'"
-            >
+            <button type="button" class="btn-full" onclick="location.href='members.html'">
               会員ページへ戻る
             </button>
             <button type="button" class="btn-full" id="logout-button">
@@ -105,31 +88,10 @@
           </div>
         </div>
 
-        <!-- ❌ ブロック時に表示 -->
-        <div
-          id="blocked-content"
-          class="input-wrap"
-          style="display:none; margin-top: 16px"
-        >
+        <!-- ❌ ブロック -->
+        <div id="blocked-content" class="input-wrap" style="display:none; margin-top: 16px">
           <p>このページは <strong>有料会員専用</strong> です。</p>
           <p class="muted" id="blocked-reason" style="margin-top: 6px"></p>
-
-          <div class="btn-col" style="margin-top: 14px">
-            <button
-              type="button"
-              class="primary btn-full"
-              onclick="location.href='members.html'"
-            >
-              会員ページへ戻る（決済はこちら）
-            </button>
-            <button
-              type="button"
-              class="btn-full"
-              onclick="location.href='index.html'"
-            >
-              ログインページへ
-            </button>
-          </div>
         </div>
       </section>
 
@@ -137,255 +99,129 @@
     </main>
 
     <script>
-      // ✅ 本番では true（access_until が無いユーザーは閲覧NG）
       const REQUIRE_PAID_MEMBER = true;
 
-      // JST表示
       function formatJST(iso) {
-        try {
-          const d = new Date(iso);
-          if (isNaN(d.getTime())) return "不正な日付";
-          return d.toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" });
-        } catch {
-          return "不正な日付";
-        }
+        const d = new Date(iso);
+        if (isNaN(d)) return "不正な日付";
+        return d.toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" });
       }
 
-      // access_until 判定
       function buildAccessInfo(accessUntilRaw) {
         if (!accessUntilRaw) {
-          return {
-            active: !REQUIRE_PAID_MEMBER,
-            accessText: "未設定",
-            statusText: "無料会員（有効期限なし）",
-          };
+          return { active: !REQUIRE_PAID_MEMBER, accessText: "未設定", statusText: "無料会員" };
         }
-
         const d = new Date(accessUntilRaw);
-        if (isNaN(d.getTime())) {
-          return {
-            active: false,
-            accessText: "不正な日付",
-            statusText: "状態不明（管理者に確認）",
-          };
-        }
-
         const now = new Date();
-        const accessText = formatJST(accessUntilRaw);
-
-        if (d.getTime() >= now.getTime()) {
-          return { active: true, accessText, statusText: "有効（有料会員）" };
-        } else {
-          return {
-            active: false,
-            accessText,
-            statusText: "期限切れ（再決済が必要）",
-          };
-        }
+        return d >= now
+          ? { active: true, accessText: formatJST(accessUntilRaw), statusText: "有効（有料会員）" }
+          : { active: false, accessText: formatJST(accessUntilRaw), statusText: "期限切れ" };
       }
 
-      // JSON読んでフィルタ用の候補を作る
-      function unique(arr) {
-        return Array.from(new Set(arr));
-      }
-
-      function sortRaceNo(a, b) {
-        return (a.race_no || 0) - (b.race_no || 0);
-      }
-
-      function escapeHTML(s) {
-        return String(s || "")
+      const unique = (arr) => [...new Set(arr)];
+      const sortRaceNo = (a, b) => (a.race_no || 0) - (b.race_no || 0);
+      const escapeHTML = (s) =>
+        String(s || "")
           .replaceAll("&", "&amp;")
           .replaceAll("<", "&lt;")
           .replaceAll(">", "&gt;")
           .replaceAll('"', "&quot;")
           .replaceAll("'", "&#039;");
-      }
 
-      function renderPredictions(list) {
+      function renderPredictions(list, userPlan) {
         const area = document.getElementById("predictions-area");
-        if (!list || list.length === 0) {
+        if (!list.length) {
           area.innerHTML = `<p class="muted">該当する予想がありません。</p>`;
           return;
         }
 
         list.sort(sortRaceNo);
 
-        const html = list
+        area.innerHTML = list
           .map((row) => {
-            const raceNo = row.race_no ?? "-";
-            const tier = row.tier ?? "";
-            const picks = row.picks ?? "";
-            const deadline = row.deadline ? `締切: ${row.deadline}` : "";
-            const notes = row.notes ?? "";
+            const anaBlock =
+              userPlan === "premium"
+                ? `
+                <div style="margin-top:12px; padding:10px; border:1px dashed rgba(250,204,21,.6); border-radius:10px">
+                  <div style="font-weight:700; color:#facc15">🔥 プレミアム限定・穴予想</div>
+                  <div class="muted" style="margin-top:6px">※ 現在準備中</div>
+                </div>`
+                : "";
 
             return `
               <div style="padding:14px; border:1px solid rgba(148,163,184,.35); border-radius:14px; margin-top:12px">
-                <div style="display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap">
-                  <div><strong>${escapeHTML(raceNo)}R</strong> <span class="muted">${escapeHTML(
-              tier
-            )}</span></div>
-                  <div class="muted">${escapeHTML(deadline)}</div>
-                </div>
-
-                <div style="margin-top:10px">
-                  <div class="muted">買い目</div>
-                  <div style="font-weight:700; margin-top:4px">${escapeHTML(
-              picks
-            )}</div>
-                </div>
-
-                <div style="margin-top:10px">
-                  <div class="muted">コメント</div>
-                  <div style="white-space:pre-wrap; margin-top:4px">${escapeHTML(
-              notes
-            )}</div>
-                </div>
-              </div>
-            `;
+                <strong>${escapeHTML(row.race_no)}R</strong>
+                <div style="margin-top:8px"><b>買い目</b><br>${escapeHTML(row.picks)}</div>
+                <div style="margin-top:8px"><b>コメント</b><br>${escapeHTML(row.notes)}</div>
+                ${anaBlock}
+              </div>`;
           })
           .join("");
-
-        area.innerHTML = html;
       }
 
       document.addEventListener("DOMContentLoaded", async () => {
         const statusText = document.getElementById("status-text");
         const predictionContent = document.getElementById("prediction-content");
         const blockedContent = document.getElementById("blocked-content");
-        const blockedReason = document.getElementById("blocked-reason");
         const logoutBtn = document.getElementById("logout-button");
 
+        if (!window.supabaseClient) return;
+
+        const { data: { user } } = await window.supabaseClient.auth.getUser();
+        if (!user) {
+          window.__unlockGuard();
+          location.href = "index.html";
+          return;
+        }
+
+        const accessInfo = buildAccessInfo(user.user_metadata?.access_until);
+        statusText.textContent = accessInfo.statusText;
+
+        if (!accessInfo.active) {
+          blockedContent.style.display = "block";
+          window.__unlockGuard();
+          setTimeout(() => (location.href = "members.html"), 100);
+          return;
+        }
+
+        predictionContent.style.display = "block";
+        window.__unlockGuard();
+
+        const res = await fetch(`data/predictions.json?v=${Date.now()}`);
+        const data = await res.json();
+
+        const dates = unique(data.map((r) => r.race_date)).sort().reverse();
         const dateSelect = document.getElementById("date-select");
         const stadiumSelect = document.getElementById("stadium-select");
 
-        // 0) config.js / supabaseClient チェック
-        if (!window.supabaseClient) {
-          statusText.textContent = "Supabaseの設定（config.js）が見つかりません。";
-          predictionContent.style.display = "none";
-          blockedContent.style.display = "block";
-          blockedReason.textContent = "config.js が読み込めていません。";
-          window.__unlockGuard(); // ✅ 解除
-          return;
-        }
+        dateSelect.innerHTML = dates.map((d) => `<option>${d}</option>`).join("");
+        dateSelect.value = dates[0];
 
-        // 1) ログイン必須
-        const {
-          data: { user },
-          error,
-        } = await window.supabaseClient.auth.getUser();
+        const stadiumsByDate = (d) =>
+          unique(data.filter((r) => r.race_date === d).map((r) => r.stadium));
 
-        if (error || !user) {
-          statusText.textContent =
-            "ログインが必要です。ログインページへ移動します。";
-          window.__unlockGuard(); // ✅ 解除してから移動
-          setTimeout(() => (location.href = "index.html"), 100);
-          return;
-        }
-
-        // 2) 有料判定
-        const meta = user.user_metadata || {};
-        const accessInfo = buildAccessInfo(meta.access_until);
-
-        statusText.textContent =
-          "会員ステータス：" +
-          accessInfo.statusText +
-          "（有効期限：" +
-          accessInfo.accessText +
-          "）";
-
-        if (!accessInfo.active) {
-          predictionContent.style.display = "none";
-          blockedContent.style.display = "block";
-          blockedReason.textContent =
-            "有料会員ではありません / 期限切れです。会員ページから決済してください。";
-
-          window.__unlockGuard(); // ✅ 解除してから members に戻す
-          setTimeout(() => {
-            location.href = "members.html";
-          }, 100);
-          return;
-        }
-
-        // 3) 予想表示OK → ガード解除
-        predictionContent.style.display = "block";
-        blockedContent.style.display = "none";
-        window.__unlockGuard(); // ✅ ここで解除（OKな人だけ中身が見える）
-
-        // 4) JSON読み込み
-        let data = [];
-        try {
-          const url = `data/predictions.json?v=${Date.now()}`; // キャッシュ対策
-          const res = await fetch(url, { cache: "no-store" });
-          if (!res.ok) throw new Error("JSON fetch failed: " + res.status);
-          data = await res.json();
-          if (!Array.isArray(data)) throw new Error("JSON is not array");
-        } catch (e) {
-          document.getElementById("predictions-area").innerHTML =
-            `<p class="muted">予想データの読み込みに失敗しました。</p>`;
-          console.error(e);
-          return;
-        }
-
-        // セレクト候補作成
-        const dates = unique(data.map((r) => r.race_date).filter(Boolean))
-          .sort()
-          .reverse();
-
-        // 日付: デフォは「一番新しい日付」
-        dateSelect.innerHTML = dates
-          .map(
-            (d) =>
-              `<option value="${escapeHTML(d)}">${escapeHTML(d)}</option>`
-          )
-          .join("");
-        const defaultDate = dates[0] || "";
-        dateSelect.value = defaultDate;
-
-        // 競艇場: デフォは「その日付で存在する最初の場」
-        function stadiumsByDate(d) {
-          return unique(
-            data
-              .filter((r) => r.race_date === d)
-              .map((r) => r.stadium)
-              .filter(Boolean)
-          ).sort();
-        }
-
-        function fillStadiumOptions(d) {
+        const fillStadiums = (d) => {
           const list = stadiumsByDate(d);
-          stadiumSelect.innerHTML = list
-            .map(
-              (s) =>
-                `<option value="${escapeHTML(s)}">${escapeHTML(s)}</option>`
-            )
-            .join("");
-          stadiumSelect.value = list[0] || "";
-        }
+          stadiumSelect.innerHTML = list.map((s) => `<option>${s}</option>`).join("");
+        };
 
-        fillStadiumOptions(defaultDate);
-
-        function refresh() {
-          const d = dateSelect.value;
-          const s = stadiumSelect.value;
-          const filtered = data.filter(
-            (r) => r.race_date === d && r.stadium === s
+        const refresh = () =>
+          renderPredictions(
+            data.filter(
+              (r) => r.race_date === dateSelect.value && r.stadium === stadiumSelect.value
+            ),
+            user.user_metadata?.plan
           );
-          renderPredictions(filtered);
-        }
 
-        // イベント
-        dateSelect.addEventListener("change", () => {
-          fillStadiumOptions(dateSelect.value);
-          refresh();
-        });
-
-        stadiumSelect.addEventListener("change", () => refresh());
-
-        // 初期描画
+        fillStadiums(dateSelect.value);
         refresh();
 
-        // ログアウト
+        dateSelect.addEventListener("change", () => {
+          fillStadiums(dateSelect.value);
+          refresh();
+        });
+        stadiumSelect.addEventListener("change", refresh);
+
         logoutBtn.addEventListener("click", async () => {
           await window.supabaseClient.auth.signOut();
           location.href = "index.html";
