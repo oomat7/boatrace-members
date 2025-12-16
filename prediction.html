@@ -128,23 +128,28 @@
           .replaceAll('"', "&quot;")
           .replaceAll("'", "&#039;");
 
+      // ✅ premium のときだけ row.ana を表示（あれば）
       function renderPredictions(list, userPlan) {
         const area = document.getElementById("predictions-area");
-        if (!list.length) {
+        if (!list || list.length === 0) {
           area.innerHTML = `<p class="muted">該当する予想がありません。</p>`;
           return;
         }
 
         list.sort(sortRaceNo);
 
+        const isPremium = userPlan === "premium";
+
         area.innerHTML = list
           .map((row) => {
+            const anaText = row.ana ?? "";
+
             const anaBlock =
-              userPlan === "premium"
+              isPremium && anaText
                 ? `
                 <div style="margin-top:12px; padding:10px; border:1px dashed rgba(250,204,21,.6); border-radius:10px">
                   <div style="font-weight:700; color:#facc15">🔥 プレミアム限定・穴予想</div>
-                  <div class="muted" style="margin-top:6px">※ 現在準備中</div>
+                  <div style="white-space:pre-wrap; margin-top:6px">${escapeHTML(anaText)}</div>
                 </div>`
                 : "";
 
@@ -163,9 +168,13 @@
         const statusText = document.getElementById("status-text");
         const predictionContent = document.getElementById("prediction-content");
         const blockedContent = document.getElementById("blocked-content");
+        const blockedReason = document.getElementById("blocked-reason");
         const logoutBtn = document.getElementById("logout-button");
 
-        if (!window.supabaseClient) return;
+        if (!window.supabaseClient) {
+          window.__unlockGuard();
+          return;
+        }
 
         const { data: { user } } = await window.supabaseClient.auth.getUser();
         if (!user) {
@@ -179,6 +188,7 @@
 
         if (!accessInfo.active) {
           blockedContent.style.display = "block";
+          blockedReason.textContent = "有料会員ではありません / 期限切れです。会員ページで決済してください。";
           window.__unlockGuard();
           setTimeout(() => (location.href = "members.html"), 100);
           return;
@@ -187,31 +197,36 @@
         predictionContent.style.display = "block";
         window.__unlockGuard();
 
-        const res = await fetch(`data/predictions.json?v=${Date.now()}`);
+        const res = await fetch(`data/predictions.json?v=${Date.now()}`, { cache: "no-store" });
         const data = await res.json();
 
-        const dates = unique(data.map((r) => r.race_date)).sort().reverse();
+        const dates = unique(data.map((r) => r.race_date).filter(Boolean)).sort().reverse();
         const dateSelect = document.getElementById("date-select");
         const stadiumSelect = document.getElementById("stadium-select");
 
-        dateSelect.innerHTML = dates.map((d) => `<option>${d}</option>`).join("");
-        dateSelect.value = dates[0];
+        dateSelect.innerHTML = dates.map((d) => `<option>${escapeHTML(d)}</option>`).join("");
+        dateSelect.value = dates[0] || "";
 
         const stadiumsByDate = (d) =>
-          unique(data.filter((r) => r.race_date === d).map((r) => r.stadium));
+          unique(
+            data
+              .filter((r) => r.race_date === d)
+              .map((r) => r.stadium)
+              .filter(Boolean)
+          );
 
         const fillStadiums = (d) => {
           const list = stadiumsByDate(d);
-          stadiumSelect.innerHTML = list.map((s) => `<option>${s}</option>`).join("");
+          stadiumSelect.innerHTML = list.map((s) => `<option>${escapeHTML(s)}</option>`).join("");
+          stadiumSelect.value = list[0] || "";
         };
 
-        const refresh = () =>
-          renderPredictions(
-            data.filter(
-              (r) => r.race_date === dateSelect.value && r.stadium === stadiumSelect.value
-            ),
-            user.user_metadata?.plan
+        const refresh = () => {
+          const filtered = data.filter(
+            (r) => r.race_date === dateSelect.value && r.stadium === stadiumSelect.value
           );
+          renderPredictions(filtered, user.user_metadata?.plan || "lite");
+        };
 
         fillStadiums(dateSelect.value);
         refresh();
